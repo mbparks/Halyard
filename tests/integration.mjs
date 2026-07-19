@@ -20,7 +20,7 @@ await new Promise(r => setTimeout(r, 300));
 const $ = (id) => w.document.getElementById(id);
 // top-level const bindings live in the global lexical scope, reachable via eval
 w.HTMLCanvasElement.prototype.getBoundingClientRect = function(){ return {left:0, top:0, width:1000, height:300, right:1000, bottom:300}; };
-const G = w.eval("({link:link, CAT:CAT, App:App, Scope:Scope, Locker:Locker, Log:Log, toggleConnect:toggleConnect, applyPanel:applyPanel, stepFreq:stepFreq, pttDown:pttDown, pttUp:pttUp, Constants:Constants, Trials:Trials, Tuner:Tuner, renderReadout:renderReadout, Wheel:Wheel, applyBand:applyBand, BAND_SETUP:BAND_SETUP, renderBandRack:renderBandRack, bandLanding:bandLanding, licence:licence, Store:Store, panelMode:panelMode, chooseMode:chooseMode, renderHelm:renderHelm, Chart:Chart, BANDPLAN:BANDPLAN, Sun:Sun, SolarFeed:SolarFeed, Bands:Bands, Grid:Grid, Dupes:Dupes, parseAdif:parseAdif, Field:Field})");
+const G = w.eval("({link:link, CAT:CAT, App:App, Scope:Scope, Locker:Locker, Log:Log, toggleConnect:toggleConnect, applyPanel:applyPanel, stepFreq:stepFreq, pttDown:pttDown, pttUp:pttUp, Constants:Constants, Trials:Trials, Tuner:Tuner, renderReadout:renderReadout, Wheel:Wheel, applyBand:applyBand, BAND_SETUP:BAND_SETUP, renderBandRack:renderBandRack, bandLanding:bandLanding, licence:licence, Store:Store, panelMode:panelMode, chooseMode:chooseMode, renderHelm:renderHelm, Chart:Chart, BANDPLAN:BANDPLAN, Sun:Sun, SolarFeed:SolarFeed, Scope:Scope, renderTraffic:renderTraffic, Bands:Bands, Grid:Grid, Dupes:Dupes, parseAdif:parseAdif, Field:Field})");
 const out = [];
 const check = (n, c, d) => out.push((c ? "pass  " : "FAIL  ") + n + (c ? "" : "  " + (d||"")));
 
@@ -116,11 +116,15 @@ $("themeSel").value = "hc"; $("themeSel").dispatchEvent(new w.Event("change"));
 check("high contrast theme applies", w.document.documentElement.getAttribute("data-theme") === "hc");
 $("themeSel").value = "night"; $("themeSel").dispatchEvent(new w.Event("change"));
 
-// 11. debug traffic log
+// 11. traffic log
 $("dbgChk").checked = true; $("dbgChk").dispatchEvent(new w.Event("change"));
 await G.link.readRxStatus();
-check("debug logging records traffic", G.link.traffic.length > 0);
-check("the traffic console rendered", $("trafOut").textContent.length > 0);
+check("traffic is recorded", G.link.traffic.length > 0);
+// the panel is deliberately not kept up to date while hidden, so opening the
+// station has to bring it current
+$("tab-bench").click();
+check("opening the bench brings the traffic console up to date",
+  $("trafOut").textContent.length > 0);
 
 // 12. polarity inversion changes the reading
 G.link.inv.ptt = true;
@@ -835,6 +839,113 @@ check("clearing the address switches the feed off", G.SolarFeed.url() === "");
 check("and says so", $("toast").textContent.includes("switched off"));
 G.Store.set("solarFeed", null); G.Store.set("solarTriedAt", 0);
 G.Chart.render();
+
+
+// ============ v1.13 selecting decoded traffic moves the waterfall marker ============
+if (!G.link.connected) { $("srcSel").value = "virtual"; await G.toggleConnect(); G.link.gapMs = 0; }
+G.App.virtual.opts.delayMs = 0;
+
+// sweep 20 m so there is a waterfall with a known span
+$("tab-scope").click();
+G.App.sweeps.length = 0;
+$("scCentre").value = "14.150"; $("scSpan").value = "40"; $("scStep").value = "5"; $("scDwell").value = "0";
+await G.Scope.sweepOnce();
+check("a sweep produced a trace", G.Scope.geom !== null);
+
+// generate traffic with the debug log on
+$("tab-bench").click();
+$("dbgChk").checked = true; $("dbgChk").dispatchEvent(new w.Event("change"));
+G.link.traffic.length = 0;
+await G.link.setFrequency(14155000);
+await G.link.setMode("USB");
+await G.link.setFrequency(7100000);
+G.renderTraffic();
+
+const rows = Array.from($("trafOut").querySelectorAll("button.trafhit"));
+check("traffic lines carrying a frequency became selectable", rows.length >= 2,
+  "selectable rows " + rows.length);
+check("lines without a frequency did not", rows.length < G.link.traffic.length,
+  rows.length + " of " + G.link.traffic.length);
+check("a selectable line names the frequency in its tooltip",
+  rows[0].title.includes("14.155.00") || rows[0].title.includes("marker A"), rows[0].title);
+
+// selecting an in-span line puts marker A there and shows the bandscope
+G.Scope.clearMarkers();
+const inSpanRow = rows.find(r => r.title.includes("14.155.00"));
+inSpanRow.click();
+await new Promise(r => setTimeout(r, 150));
+check("selecting a decoded frequency switches to the bandscope", $("st-scope").hidden === false);
+check("and puts marker A on exactly that frequency", G.Scope.markers.A === 14155000,
+  "marker at " + G.Scope.markers.A);
+check("the marker readout names the frequency", $("markRead").textContent.includes("14.155.00"),
+  $("markRead").textContent);
+check("an in span marker is not called off scale", !$("markRead").textContent.includes("off scale"));
+check("and it reports the reading at that point", /S\d|S9/.test($("markRead").textContent),
+  $("markRead").textContent);
+
+// selecting an out of span line must say so rather than draw a marker at the edge
+$("tab-bench").click();
+const outRow = Array.from($("trafOut").querySelectorAll("button.trafhit"))
+  .find(r => r.title.includes("7.100.00"));
+outRow.click();
+await new Promise(r => setTimeout(r, 150));
+check("an out of span frequency still sets the marker", G.Scope.markers.A === 7100000);
+check("but says it is outside the swept span",
+  $("toast").textContent.includes("outside the swept span"), $("toast").textContent.slice(0, 110));
+check("the readout calls it off scale rather than quoting a reading",
+  $("markRead").textContent.includes("off scale"), $("markRead").textContent);
+check("and it offers to recentre the sweep there",
+  $("scCentre").value === "7.10000", "scCentre now " + $("scCentre").value);
+
+// keyboard reachable, since it is a real button
+$("tab-bench").click();
+const kbRow = Array.from($("trafOut").querySelectorAll("button.trafhit"))[0];
+check("a traffic line is a real button, so it is keyboard reachable",
+  kbRow.tagName === "BUTTON" && kbRow.disabled === false);
+
+
+// ============ v1.14 diagnosing a link that never answers ============
+$("tab-bench").click();
+if (!G.link.connected) { $("srcSel").value = "virtual"; await G.toggleConnect(); G.link.gapMs = 0; }
+G.link.traffic.length = 0;
+G.link.fails = 0; G.link.diagnosis = null;
+$("linkDiag").classList.add("hide");
+
+// with debug logging off, the log must still carry what was sent
+$("dbgChk").checked = false; $("dbgChk").dispatchEvent(new w.Event("change"));
+await G.link.setFrequency(14150000);
+G.renderTraffic();
+check("commands are logged with debug switched off",
+  G.link.traffic.some(l => l.dir === "TX"),
+  JSON.stringify(G.link.traffic.map(l => l.dir)));
+
+// now make the radio go silent and let it fail three times
+const realExchange = G.link.transport.exchange.bind(G.link.transport);
+G.link.transport.bytesEver = 0;
+G.link.transport.exchange = async () => { throw new Error("timeout waiting for 1 byte reply"); };
+G.link.timeoutMs = 20; G.link.retries = 0;
+for (let i = 0; i < 3; i++) { try { await G.link.readRxStatus(); } catch (e) {} }
+await new Promise(r => setTimeout(r, 150));
+check("three failures in a row raise a diagnosis", !!G.link.diagnosis);
+check("the diagnosis appears on the bench, not just as a toast",
+  !$("linkDiag").classList.contains("hide"));
+check("it names the fact that nothing has ever come back",
+  $("linkDiag").textContent.includes("never sent back a single byte"),
+  $("linkDiag").textContent.slice(0, 120));
+check("it points at menu 019 and the cable",
+  $("linkDiag").textContent.includes("menu 019") && $("linkDiag").textContent.includes("level conversion"));
+G.renderTraffic();
+check("the diagnosis is in the traffic log too",
+  G.link.traffic.some(l => l.dir === "??"));
+
+// reconnecting starts clean
+G.link.transport.exchange = realExchange;
+await G.toggleConnect();
+$("srcSel").value = "virtual";
+await G.toggleConnect();
+G.link.gapMs = 0;
+check("reconnecting clears the previous diagnosis", G.link.diagnosis === null);
+check("and resets the failure count", G.link.fails === 0);
 
 if (errs.length) out.push("FAIL  no uncaught page errors  " + errs.join(" | "));
 else out.push("pass  no uncaught page errors");

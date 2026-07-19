@@ -2,6 +2,65 @@
 
 All notable changes to Halyard (FI-119).
 
+## 1.14.0
+
+Everything in this release came out of one traffic log from the bench that was
+almost impossible to read.
+
+- **Fixed: a disconnect during an exchange crashed with a TypeError.** The retry
+  loop checked that a link existed once, at the top, then awaited several times.
+  A disconnect during one of those awaits left the next attempt reaching into a
+  null transport, which surfaced as `Cannot read properties of null (reading
+  'exchange')`. The check now runs before every attempt and the error says the
+  link closed while the command was in flight.
+- **Fixed: the traffic log recorded failures but not the commands that caused
+  them.** Sent and received blocks were logged only when debug logging was
+  switched on, while errors were logged always. An exported log was therefore a
+  list of timeouts with no context, which is the opposite of useful. Traffic is
+  now always recorded to the ring buffer.
+- The traffic panel is no longer redrawn while it is hidden, and is brought up
+  to date when the Bench station is opened. Rebuilding it on every poll while
+  nobody was looking was wasted work.
+- **After three failed exchanges in a row, Halyard says what the pattern
+  means** rather than printing a fourth identical timeout. It distinguishes a
+  link that has never received a single byte, which points at the port, the CAT
+  speed, or a cable without level conversion, from one that answered earlier and
+  stopped, which points at the cable or the radio. Raised once per run of
+  failures, cleared by any success, and reset on reconnect.
+- Exported traffic logs now begin with the session settings: version,
+  transport, baud and framing, timeout, gap, retry count, how many bytes were
+  ever received, and the diagnosis if there was one. A log of timeouts cannot be
+  read without them.
+
+## 1.13.0
+
+Linking the traffic log to the bandscope, and an honesty fix it exposed.
+
+- Every line in the Bench traffic log that carries an RF frequency is now a
+  button. Pressing it switches to the bandscope and puts marker A on exactly
+  that frequency, which is how you see where the radio was when a given command
+  went out.
+- The frequency is decoded from the CAT bytes rather than scraped from the note
+  text, so it is right by construction. Set frequency commands and read replies
+  qualify. Repeater offsets and clarifier offsets deliberately do not: they are
+  amounts, not places, and nothing on a waterfall corresponds to six hundred
+  kilohertz of shift.
+- **Fixed: a marker outside the swept span was drawn at the edge of the trace**
+  as though it had been placed there, while the readout gave its real
+  frequency. Off scale now looks off scale: a caret against the edge, and the
+  readout says so. This was always wrong, but selecting a logged frequency
+  triggers it constantly, since a logged frequency often is not inside the
+  current sweep.
+- **Fixed: `sampleAt` clamped to the nearest end of the sweep**, so asking for
+  the reading at a frequency that was never swept returned a neighbouring
+  frequency's noise floor as though it belonged to it. It now returns nothing.
+- Selecting an out of span frequency loads it into the centre field, so
+  sweeping again brings it into view.
+- Markers can be placed before any sweep exists, instead of being refused.
+- **Fixed a test of my own** that wrapped an async call in a synchronous `try`,
+  leaving the rejection unhandled and the check passing without testing
+  anything.
+
 ## 1.12.0
 
 Making a wrong assumption in the solar parser look like a wrong assumption.

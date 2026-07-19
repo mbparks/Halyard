@@ -10,7 +10,7 @@ the radio's front panel in a browser window, builds a bandscope by sweeping the
 S-meter, keeps a channel locker and a contact log, and includes a virtual
 FT-897D so all of it can be exercised with no cable attached.
 
-Version 1.12.0. GPL-3.0.
+Version 1.14.0. GPL-3.0.
 
 ---
 
@@ -210,7 +210,7 @@ came out of published documentation, which for this radio contradicts itself.
 ## Testing
 
 Halyard carries its own test suite. Open the Bench station and press **Run self
-test**: 349 assertions covering BCD encoding, every command encoder, the status
+test**: 390 assertions covering BCD encoding, every command encoder, the status
 byte decoders and their inversions, schema validation of imported data, ADIF in
 and out, CSV round trips, the virtual radio's protocol behaviour, fault
 injection, link queue ordering, provenance tracking, the constants layer, band
@@ -226,7 +226,7 @@ npm test
 ```
 
 `tests/selftest.mjs` runs the in-app suite under jsdom. `tests/integration.mjs`
-drives the real UI, 243 further checks covering connection, panel apply,
+drives the real UI, 265 further checks covering connection, panel apply,
 read-back, sweeps, markers, harvesting, trials, ADIF round trips, export
 contents, digit tuning by pointer and by keyboard, dial turns and flicks, band
 selection, and clean disconnect. Both must pass before a release.

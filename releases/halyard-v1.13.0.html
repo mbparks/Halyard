@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- HALYARD :: FI-119 :: halyard.html :: v1.14.0 -->
+<!-- HALYARD :: FI-119 :: halyard.html :: v1.13.0 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -826,7 +826,6 @@ body.compact .linkbar{gap:6px}
         <button id="btnTrafSave" class="slim" type="button">Save log</button>
       </div>
     </div>
-    <div class="warnstrip hide" id="linkDiag" style="margin-top:8px"></div>
     <p class="tiny" style="margin:6px 0 0">Any line that carries a frequency is a button. Press it to put marker A on that frequency in the bandscope, which is how you see where the radio was when a command went out.</p>
     <pre class="console" id="trafOut" style="margin-top:8px"></pre>
   </div>
@@ -899,7 +898,7 @@ body.compact .linkbar{gap:6px}
    GPL-3.0
    ===================================================================== */
 
-const VERSION = "1.14.0";
+const VERSION = "1.13.0";
 const FI = "FI-119";
 const NS = "halyard.v1";
 
@@ -1279,7 +1278,6 @@ class VirtualTransport {
       this.radio.send(cmd),
       sleep(timeoutMs).then(() => { throw new Error("timeout"); })
     ]);
-    this.bytesEver = (this.bytesEver || 0) + (reply ? reply.length : 0);
     if (expectBytes === 0) return new Uint8Array(0);
     if (reply.length < expectBytes) throw new Error("short reply (" + reply.length + " of " + expectBytes + ")");
     return reply.slice(0, expectBytes);
@@ -1288,7 +1286,7 @@ class VirtualTransport {
 
 class SerialTransport {
   constructor(baud) { this.baud = baud; this.port = null; this.open = false; this.kind = "serial";
-    this.reader = null; this.writer = null; this.buf = []; this.bytesEver = 0; }
+    this.reader = null; this.writer = null; this.buf = []; }
   static supported() { return typeof navigator !== "undefined" && !!navigator.serial; }
   async connect() {
     if (!SerialTransport.supported()) throw new Error("This browser has no Web Serial. Use Chrome or Edge over https or from disk.");
@@ -1304,7 +1302,7 @@ class SerialTransport {
       while (this.open) {
         const { value, done } = await this.reader.read();
         if (done) break;
-        if (value) { this.bytesEver += value.length; for (const b of value) this.buf.push(b); }
+        if (value) for (const b of value) this.buf.push(b);
       }
     } catch (e) { /* closed under us */ }
   }
@@ -1344,8 +1342,6 @@ class Link {
     this.retries = 2;
     this.listeners = [];
     this.traffic = [];
-    this.fails = 0;
-    this.diagnosis = null;
     this.debug = false;
     this.inv = { sql: false, tone: false, disc: false, ptt: false, split: false };
     this.shadow = {
@@ -1371,20 +1367,6 @@ class Link {
     };
   }
   get connected() { return !!(this.transport && this.transport.open); }
-
-  /* Forty identical timeout lines tell you less than one sentence naming what
-     the pattern means. Raised once per run of failures, not once per failure. */
-  noteFailure() {
-    this.fails = (this.fails || 0) + 1;
-    if (this.fails !== 3) return;            // once, on the third
-    const heard = this.transport ? (this.transport.bytesEver || 0) : 0;
-    const d = heard === 0
-      ? "The port is open and commands are going out, but the radio has never sent back a single byte. That is not pacing and no amount of retrying will fix it. Check that the radio is on, that its CAT speed in menu 019 matches the speed chosen here, that the lead is a CAT interface with level conversion rather than a plain TTL cable, and that you picked the radio's port rather than another device."
-      : "The radio answered earlier in this session and has now stopped, after " + heard + " bytes. That points at the cable or the radio rather than at the settings.";
-    this.diagnosis = d;
-    this.log("??", [], d);
-    this.emit("diagnosis");
-  }
   on(fn) { this.listeners.push(fn); }
   emit(what) { for (const fn of this.listeners) { try { fn(what, this); } catch (e) { console.error(e); } } }
 
@@ -1404,8 +1386,6 @@ class Link {
   async connect(transport) {
     if (this.connected) await this.disconnect();
     this.transport = transport;
-    this.fails = 0;
-    this.diagnosis = null;
     await transport.connect();
     this.emit("link");
   }
@@ -1421,19 +1401,10 @@ class Link {
       if (!this.connected) throw new Error("No radio connected");
       let lastErr = null;
       for (let attempt = 0; attempt <= this.retries; attempt++) {
-        /* Checked every attempt, not once at the top. This loop awaits, and a
-           disconnect during an await used to leave the next attempt reaching
-           into a null transport, which surfaced as a TypeError about reading
-           'exchange' of null instead of the plain fact that the link closed. */
-        if (!this.connected) {
-          lastErr = new Error("the link closed while this command was in flight");
-          break;
-        }
         try {
-          this.log("TX", cmd, note + (attempt ? " (retry " + attempt + ")" : ""));
+          if (this.debug) this.log("TX", cmd, note + (attempt ? " (retry " + attempt + ")" : ""));
           const reply = await this.transport.exchange(cmd, expectBytes, this.timeoutMs);
-          if (expectBytes) this.log("RX", reply, note);
-          this.fails = 0;
+          if (this.debug && expectBytes) this.log("RX", reply, note);
           await sleep(this.gapMs);
           return reply;
         } catch (e) {
@@ -1442,11 +1413,7 @@ class Link {
           await sleep(this.gapMs * 2);
         }
       }
-      if (lastErr && expectBytes) {
-        this.log("!!", [], note + ": " + lastErr.message);
-        this.noteFailure();
-        throw lastErr;
-      }
+      if (lastErr && expectBytes) { this.log("!!", [], note + ": " + lastErr.message); throw lastErr; }
       return new Uint8Array(0);
     };
     this.queue = this.queue.then(run, run);
@@ -3657,101 +3624,6 @@ const SelfTest = (() => {
       await l7.disconnect();
     }
 
-    /* --- v1.14 a link that closes mid command --- */
-    {
-      /* A transport that goes away while an exchange is in flight used to
-         produce a TypeError about reading a property of null, which told the
-         operator nothing about what had happened. */
-      const l8 = new Link();
-      const vr8 = new VirtualRadio({ delayMs: 0 });
-      await l8.connect(new VirtualTransport(vr8));
-      l8.gapMs = 0; l8.timeoutMs = 40; l8.retries = 3;
-      let stallCount = 0;
-      l8.transport.exchange = async () => {
-        stallCount++;
-        if (stallCount === 1) { l8.transport = null; }   // disconnected under us
-        await sleep(5);
-        throw new Error("timeout waiting for 5 byte reply");
-      };
-      let msg = "";
-      try { await l8.readFreqMode(); } catch (e) { msg = e.message; }
-      ok("a link closing mid command says so in plain words",
-        /link closed/.test(msg), "got: " + msg);
-      ok("and does not report a property of null", !/null/.test(msg), "got: " + msg);
-    }
-
-    /* --- v1.14 the traffic log records what was sent, not only what failed --- */
-    {
-      const l9 = new Link();
-      const vr9 = new VirtualRadio({ delayMs: 0 });
-      await l9.connect(new VirtualTransport(vr9));
-      l9.gapMs = 0;
-      l9.debug = false;                       // deliberately off
-      await l9.setFrequency(14150000);
-      await l9.readFreqMode();
-      ok("commands are logged even with debug logging switched off",
-        l9.traffic.some(x => x.dir === "TX"),
-        JSON.stringify(l9.traffic.map(x => x.dir)));
-      ok("replies are logged too", l9.traffic.some(x => x.dir === "RX"));
-      ok("so an exported log has the context around a failure, not just the failure",
-        l9.traffic.filter(x => x.dir === "TX").length >= 2);
-      await l9.disconnect();
-    }
-
-    /* --- v1.14 saying what a run of failures means --- */
-    {
-      const l10 = new Link();
-      const vr10 = new VirtualRadio({ delayMs: 0 });
-      await l10.connect(new VirtualTransport(vr10));
-      l10.gapMs = 0; l10.timeoutMs = 20; l10.retries = 0;
-      l10.transport.bytesEver = 0;
-      l10.transport.exchange = async () => { await sleep(2); throw new Error("timeout waiting for 1 byte reply"); };
-
-      for (let i = 0; i < 2; i++) { try { await l10.readRxStatus(); } catch (e) {} }
-      ok("nothing is claimed after one or two failures", l10.diagnosis === null);
-      try { await l10.readRxStatus(); } catch (e) {}
-      ok("a diagnosis is raised on the third failure in a row", !!l10.diagnosis);
-      ok("with nothing ever received it blames the port, speed, or cable",
-        /never sent back a single byte/.test(l10.diagnosis), l10.diagnosis);
-      ok("and says retrying will not help", /no amount of retrying/.test(l10.diagnosis));
-      ok("the diagnosis is written into the log as well",
-        l10.traffic.some(x => x.dir === "??"));
-      const before = l10.traffic.filter(x => x.dir === "??").length;
-      try { await l10.readRxStatus(); } catch (e) {}
-      eq("and is not repeated on every subsequent failure",
-        l10.traffic.filter(x => x.dir === "??").length, before);
-
-      /* a link that answered and then stopped is a different fault */
-      const l11 = new Link();
-      const vr11 = new VirtualRadio({ delayMs: 0 });
-      await l11.connect(new VirtualTransport(vr11));
-      l11.gapMs = 0; l11.timeoutMs = 20; l11.retries = 0;
-      await l11.readFreqMode();                       // succeeds, so bytes arrive
-      ok("a working link has received bytes", l11.transport.bytesEver > 0);
-      l11.transport.exchange = async () => { await sleep(2); throw new Error("timeout"); };
-      for (let i = 0; i < 3; i++) { try { await l11.readRxStatus(); } catch (e) {} }
-      ok("a link that answered and then stopped is diagnosed differently",
-        /answered earlier/.test(l11.diagnosis || ""), l11.diagnosis);
-
-      /* and a success clears the count, so an occasional dropped block is not
-         escalated into a fault */
-      const l12 = new Link();
-      const vr12 = new VirtualRadio({ delayMs: 0 });
-      await l12.connect(new VirtualTransport(vr12));
-      l12.gapMs = 0;
-      const good = l12.transport.exchange.bind(l12.transport);
-      let n = 0;
-      l12.transport.exchange = async (c, e2, t) => {
-        n++;
-        if (n % 3 === 0) throw new Error("timeout");
-        return good(c, e2, t);
-      };
-      for (let i = 0; i < 12; i++) { try { await l12.readRxStatus(); } catch (e) {} }
-      ok("an occasional dropped block is not escalated into a fault",
-        l12.diagnosis === null, String(l12.diagnosis));
-      await l10.disconnect(); await l11.disconnect(); await l12.disconnect();
-    }
-
     /* --- rendering does not blow up --- */
     let drew = true;
     try { Scope.draw(null, null); } catch (e) { drew = false; }
@@ -3823,7 +3695,6 @@ function buildAbout() {
     "1.6.0  A knob you can actually turn, flick, and let coast, plus a band rack that drops the radio on the bottom edge of any band the FT-897D covers.",
     "1.7.0  Fixed a repeater offset leaking from the VHF bands onto HF, where CAT cannot read it back. Added a third provenance mark, staged, so Halyard stops claiming it sent things it never sent.",
     "1.8.0  Fixed the panel controls, which did nothing until Send to radio was pressed. Band buttons now land in the phone segment in a voice mode, with the edges following your licence class.",
-    "1.14.0  The traffic log now records what was sent as well as what failed, exports the port settings with it, and after three failures in a row says what the pattern means instead of repeating the timeout.",
     "1.13.0  Selecting a decoded frequency in the traffic log puts marker A on it in the bandscope. A marker off the end of the sweep now reads as off scale instead of being drawn at the edge.",
     "1.12.0  The solar feed now says how many bands it rated and names any band group it did not recognise, so a wrong assumption in the parser looks like a wrong assumption rather than like poor propagation.",
     "1.11.2  The solar proxy and the optional Pages config no longer share a name, which made deploying from the wrong directory silently publish the wrong thing.",
@@ -3916,7 +3787,6 @@ function showStation(id) {
   Store.set("station", id);
   if (id === "scope") Scope.draw(null, null);
   if (id === "chart") { Chart.render(); Chart.maybeAutoFetch(); }
-  if (id === "bench") renderTraffic();   // it is not kept up to date while hidden
 }
 
 function centreOfView() {
@@ -4071,23 +3941,8 @@ function wire() {
   });
   $("btnTrafClear").addEventListener("click", () => { link.traffic.length = 0; renderTraffic(); });
   $("btnTrafSave").addEventListener("click", () => {
-    /* Without the session settings a log of timeouts cannot be read by anyone,
-       including the person who recorded it. */
-    const t = link.transport;
-    const head = [
-      "Halyard " + VERSION + " traffic log",
-      "recorded    " + new Date().toISOString(),
-      "transport   " + (t ? t.kind : "not connected"),
-      "baud        " + (t && t.baud ? t.baud : "n/a") + ", 8 data bits, 2 stop bits, no parity, no flow control",
-      "timeout     " + link.timeoutMs + " ms, gap " + link.gapMs + " ms, retries " + link.retries,
-      "bytes in    " + (t ? (t.bytesEver || 0) : 0) + " received from the radio this session",
-      link.diagnosis ? "diagnosis   " + link.diagnosis : null,
-      "",
-      "time\tdir\tbytes\tnote",
-      ""
-    ].filter(x => x !== null).join("\n");
     const text = link.traffic.map(l => l.t + "\t" + l.dir + "\t" + l.bytes + "\t" + l.note).join("\n");
-    download("halyard-traffic.txt", head + (text || "no traffic recorded"), "text/plain");
+    download("halyard-traffic.txt", text || "no traffic recorded", "text/plain");
   });
   $("btnExportAll").addEventListener("click", exportAll);
   $("btnImportAll").addEventListener("click", importAll);
@@ -4230,12 +4085,7 @@ function wire() {
 
   /* the link tells the UI when anything changed */
   link.on((what) => {
-    if (what === "traffic") { if (!$("st-bench").hidden) renderTraffic(); }
-    if (what === "diagnosis") {
-      toast(link.diagnosis, true);
-      const strip = $("linkDiag");
-      if (strip) { strip.textContent = link.diagnosis; strip.classList.remove("hide"); }
-    }
+    if (what === "traffic") renderTraffic();
     else renderHelm();
   });
 }
