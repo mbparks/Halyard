@@ -1,0 +1,3543 @@
+<!DOCTYPE html>
+<!-- HALYARD :: FI-119 :: halyard.html :: v1.4.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HALYARD (FI-119) - Yaesu FT-897D control head</title>
+<style>
+/* ---------------------------------------------------------------
+   HALYARD design tokens
+   Nightwatch (default), Daylight, High Contrast
+   Semantics: amber = receive / dial lamp, red = transmit,
+   solid fill = CONFIRMED by radio, hollow outline = ASSERTED by us
+   --------------------------------------------------------------- */
+:root{
+  --bg:#0b110d; --panel:#131c16; --panel-2:#0f1712; --sunk:#080d09;
+  --ink:#d3e5d7; --dim:#7e9587; --faint:#4e6157;
+  --rule:#26352c; --rule-hi:#3a5145;
+  --lamp:#e8a33d; --lamp-soft:rgba(232,163,61,.16);
+  --tx:#e0483f; --tx-soft:rgba(224,72,63,.18);
+  --trace:#79e6a6; --trace-soft:rgba(121,230,166,.14);
+  --warn:#e6c04a;
+  --focus:#8fd0ff;
+  --r:3px;
+  --gap:14px;
+  --f-legend:"Roboto Condensed","Arial Narrow","Liberation Sans Narrow","Helvetica Neue",system-ui,sans-serif;
+  --f-body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-num:ui-monospace,"SF Mono","DejaVu Sans Mono","Liberation Mono",Menlo,monospace;
+}
+[data-theme="day"]{
+  --bg:#dfe3da; --panel:#eef1e9; --panel-2:#e5e9df; --sunk:#cfd5c8;
+  --ink:#1b2620; --dim:#4e5c53; --faint:#7d8a81;
+  --rule:#bcc5b8; --rule-hi:#98a695;
+  --lamp:#8a5a06; --lamp-soft:rgba(138,90,6,.13);
+  --tx:#a5231c; --tx-soft:rgba(165,35,28,.14);
+  --trace:#1c6b41; --trace-soft:rgba(28,107,65,.14);
+  --warn:#7a5f00;
+  --focus:#0a4d8c;
+}
+[data-theme="hc"]{
+  --bg:#000; --panel:#000; --panel-2:#000; --sunk:#000;
+  --ink:#fff; --dim:#fff; --faint:#d0d0d0;
+  --rule:#fff; --rule-hi:#fff;
+  --lamp:#ffd400; --lamp-soft:rgba(255,212,0,.2);
+  --tx:#ff5b52; --tx-soft:rgba(255,91,82,.22);
+  --trace:#7dffb4; --trace-soft:rgba(125,255,180,.2);
+  --warn:#ffd400;
+  --focus:#7dd3ff;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:var(--f-body);
+  font-size:clamp(14px,.55vw + 12px,16px);
+  line-height:1.45;
+  -webkit-text-size-adjust:100%;
+}
+:focus-visible{outline:2px solid var(--focus); outline-offset:2px}
+[data-theme="hc"] :focus-visible{outline-width:3px}
+
+/* ---- structural furniture ---- */
+.wrap{max-width:1180px;margin:0 auto;padding:var(--gap) clamp(10px,2vw,22px) 60px}
+.legend{
+  font-family:var(--f-legend); text-transform:uppercase;
+  letter-spacing:.16em; font-size:.72rem; color:var(--dim);
+  font-weight:600;
+}
+.rule{height:1px;background:var(--rule);border:0;margin:0}
+.panel{
+  background:var(--panel); border:1px solid var(--rule);
+  border-radius:var(--r); padding:14px;
+}
+.panel + .panel{margin-top:var(--gap)}
+.sunk{background:var(--sunk);border:1px solid var(--rule);border-radius:var(--r)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.grow{flex:1 1 auto;min-width:0}
+.stack{display:flex;flex-direction:column;gap:10px}
+.grid{display:grid;gap:10px}
+.hide{display:none !important}
+.tiny{font-size:.76rem;color:var(--dim)}
+.mono{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+
+/* ---- masthead ---- */
+header.masthead{
+  display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;
+  border-bottom:1px solid var(--rule); padding-bottom:8px; margin-bottom:var(--gap);
+}
+.brand{font-family:var(--f-legend);text-transform:uppercase;letter-spacing:.34em;
+  font-size:1.32rem;font-weight:700;color:var(--ink);line-height:1}
+.brand small{display:block;letter-spacing:.14em;font-size:.6rem;color:var(--faint);margin-top:5px;font-weight:600}
+.masthead .spacer{flex:1 1 auto}
+
+/* ---- controls ---- */
+button,select,input,textarea{font:inherit;color:var(--ink)}
+button{
+  background:var(--panel-2); border:1px solid var(--rule-hi); color:var(--ink);
+  border-radius:var(--r); padding:9px 12px; min-height:44px; cursor:pointer;
+  font-family:var(--f-legend); text-transform:uppercase; letter-spacing:.11em;
+  font-size:.76rem; font-weight:600;
+}
+button:hover:not(:disabled){border-color:var(--lamp);color:var(--lamp)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.on{background:var(--lamp-soft);border-color:var(--lamp);color:var(--lamp)}
+button.danger.on{background:var(--tx-soft);border-color:var(--tx);color:var(--tx)}
+button.slim{min-height:34px;padding:5px 9px;font-size:.68rem}
+select,input[type=text],input[type=number],input[type=search],textarea{
+  background:var(--sunk); border:1px solid var(--rule-hi); border-radius:var(--r);
+  padding:8px 9px; min-height:40px; width:100%;
+}
+textarea{min-height:70px;resize:vertical;font-family:var(--f-body)}
+label.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+label.field > span{font-family:var(--f-legend);text-transform:uppercase;letter-spacing:.13em;
+  font-size:.66rem;color:var(--dim);font-weight:600}
+label.check{display:flex;gap:8px;align-items:center;min-height:34px;cursor:pointer}
+input[type=checkbox]{width:18px;height:18px;min-height:0;accent-color:var(--lamp)}
+input[type=range]{width:100%;accent-color:var(--lamp);min-height:34px}
+
+/* ---- station tabs ---- */
+nav.stations{display:flex;gap:0;border-bottom:1px solid var(--rule);margin:var(--gap) 0;flex-wrap:wrap}
+nav.stations button{
+  background:none;border:0;border-bottom:2px solid transparent;border-radius:0;
+  letter-spacing:.2em;color:var(--dim);padding:10px 14px;
+}
+nav.stations button[aria-selected="true"]{color:var(--lamp);border-bottom-color:var(--lamp)}
+nav.stations button:hover{color:var(--ink)}
+
+/* ---- link bar ---- */
+.linkbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  border:1px solid var(--rule);border-radius:var(--r);background:var(--panel-2);padding:8px 10px}
+.lamp{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-legend);
+  text-transform:uppercase;letter-spacing:.14em;font-size:.66rem;font-weight:600;color:var(--faint)}
+.lamp i{width:9px;height:9px;border-radius:50%;background:var(--faint);border:1px solid var(--rule-hi);
+  display:inline-block;flex:none}
+.lamp.lit{color:var(--lamp)} .lamp.lit i{background:var(--lamp);box-shadow:0 0 7px var(--lamp)}
+.lamp.tx.lit{color:var(--tx)} .lamp.tx.lit i{background:var(--tx);box-shadow:0 0 8px var(--tx)}
+
+/* ---- the readout ---- */
+.readout{
+  display:flex;align-items:baseline;justify-content:center;gap:6px;
+  padding:16px 10px 10px; background:var(--sunk);
+  border:1px solid var(--rule); border-radius:var(--r);
+}
+.readout .hz{
+  font-family:var(--f-num); font-variant-numeric:tabular-nums;
+  font-size:clamp(2.1rem,7.4vw,3.7rem); font-weight:600;
+  letter-spacing:.02em; color:var(--lamp); line-height:1;
+  text-shadow:0 0 18px var(--lamp-soft);
+}
+.readout .hz .lo{color:var(--faint)}
+.readout .unit{font-family:var(--f-legend);letter-spacing:.2em;font-size:.8rem;color:var(--dim);font-weight:600}
+body.transmitting .readout .hz{color:var(--tx);text-shadow:0 0 18px var(--tx-soft)}
+
+/* provenance chips: solid = confirmed by the radio, hollow = asserted by us */
+.prov{display:inline-flex;align-items:center;gap:5px;font-family:var(--f-legend);
+  font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600;
+  border-radius:999px;padding:2px 8px;border:1px solid var(--rule-hi);color:var(--dim)}
+.prov.confirmed{background:var(--trace-soft);border-color:var(--trace);color:var(--trace)}
+.prov.asserted{background:none;border-style:dashed;border-color:var(--warn);color:var(--warn)}
+
+/* ---- meters ---- */
+.meter{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center}
+.meter .bars{display:flex;gap:2px;height:16px}
+.meter .bars i{flex:1 1 0;background:var(--sunk);border:1px solid var(--rule);border-radius:1px}
+.meter .bars i.on{background:var(--trace);border-color:var(--trace)}
+.meter.txm .bars i.on{background:var(--tx);border-color:var(--tx)}
+.meter .val{font-family:var(--f-num);font-size:.8rem;color:var(--dim);min-width:5ch;text-align:right}
+
+/* ---- bandscope (the signature) ---- */
+.scope{position:relative;background:var(--sunk);border:1px solid var(--rule);border-radius:var(--r);padding:8px}
+.scope canvas{display:block;width:100%;height:auto;image-rendering:pixelated}
+.scope .caption{display:flex;justify-content:space-between;gap:10px;margin-top:6px}
+
+/* ---- tables ---- */
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--rule);vertical-align:middle}
+th{font-family:var(--f-legend);text-transform:uppercase;letter-spacing:.13em;font-size:.64rem;
+  color:var(--dim);font-weight:600;position:sticky;top:0;background:var(--panel);z-index:1}
+tbody tr:hover{background:var(--panel-2)}
+tbody tr:focus-within{background:var(--panel-2);outline:1px solid var(--rule-hi)}
+td.num{font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tablewrap{max-height:52vh;overflow:auto;border:1px solid var(--rule);border-radius:var(--r)}
+
+/* ---- log / console ---- */
+pre.console{
+  margin:0;max-height:240px;overflow:auto;background:var(--sunk);border:1px solid var(--rule);
+  border-radius:var(--r);padding:9px;font-family:var(--f-num);font-size:.74rem;line-height:1.5;
+  white-space:pre-wrap;word-break:break-word;color:var(--dim);
+}
+pre.console b{color:var(--ink);font-weight:600}
+
+/* ---- dialogs ---- */
+dialog{
+  background:var(--panel);color:var(--ink);border:1px solid var(--rule-hi);border-radius:var(--r);
+  max-width:min(680px,94vw);width:100%;padding:0;
+}
+dialog::backdrop{background:rgba(0,0,0,.62)}
+dialog .dhead{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--rule)}
+dialog .dbody{padding:14px;max-height:70vh;overflow:auto}
+dialog .dfoot{padding:12px 14px;border-top:1px solid var(--rule);display:flex;gap:8px;justify-content:flex-end}
+
+/* ---- toast ---- */
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;
+  display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:max-content;max-width:92vw}
+#toast div{background:var(--panel);border:1px solid var(--rule-hi);border-left:3px solid var(--lamp);
+  border-radius:var(--r);padding:9px 13px;font-size:.84rem}
+#toast div.bad{border-left-color:var(--tx)}
+
+.notice{border-left:3px solid var(--warn);background:var(--panel-2);padding:9px 11px;border-radius:var(--r);font-size:.84rem}
+
+/* v1.4 one hand field layout: the readout and the transmit key come first */
+body.compact .wrap{padding-left:8px;padding-right:8px}
+body.compact .readout .hz{font-size:clamp(2.4rem,12vw,3.2rem)}
+body.compact #st-helm .panel:first-child .row:nth-of-type(2){flex-direction:column;align-items:stretch}
+body.compact #btnPtt{width:100%;min-height:64px;font-size:1rem;order:99}
+body.compact .grid{grid-template-columns:1fr !important}
+body.compact nav.stations button{flex:1 1 33%}
+body.compact .tablewrap{max-height:44vh}
+body.compact .linkbar{gap:6px}
+
+@media (max-width:640px){
+  nav.stations button{flex:1 1 auto;padding:10px 6px;letter-spacing:.12em}
+  .brand{letter-spacing:.22em;font-size:1.1rem}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms !important;transition-duration:.001ms !important}
+}
+</style>
+</head>
+<body>
+<div id="toast" role="status" aria-live="polite"></div>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="brand">Halyard<small>FI-119 &middot; Yaesu FT-897D control head</small></div>
+  <div class="spacer"></div>
+  <div class="row">
+    <label class="field" style="min-width:130px">
+      <span>Theme</span>
+      <select id="themeSel">
+        <option value="night">Nightwatch</option>
+        <option value="day">Daylight</option>
+        <option value="hc">High contrast</option>
+      </select>
+    </label>
+    <button id="btnAbout" type="button">About</button>
+  </div>
+</header>
+
+<div class="linkbar" role="region" aria-label="Radio link">
+  <span class="lamp" id="lampLink"><i></i>Link</span>
+  <span class="lamp tx" id="lampTx"><i></i>TX</span>
+  <span class="lamp" id="lampSql"><i></i>Signal</span>
+  <span class="lamp" id="lampSplit"><i></i>Split</span>
+  <span class="grow"></span>
+  <label class="field" style="max-width:150px">
+    <span>Source</span>
+    <select id="srcSel">
+      <option value="serial">Serial cable</option>
+      <option value="virtual">Virtual FT-897D</option>
+    </select>
+  </label>
+  <label class="field" style="max-width:120px">
+    <span>CAT rate</span>
+    <select id="baudSel">
+      <option>4800</option><option>9600</option><option>38400</option>
+    </select>
+  </label>
+  <button id="btnConnect" type="button">Connect</button>
+</div>
+
+<nav class="stations" role="tablist" aria-label="Stations">
+  <button role="tab" id="tab-helm" aria-controls="st-helm" aria-selected="true" type="button">Helm</button>
+  <button role="tab" id="tab-scope" aria-controls="st-scope" aria-selected="false" type="button">Bandscope</button>
+  <button role="tab" id="tab-locker" aria-controls="st-locker" aria-selected="false" type="button">Locker</button>
+  <button role="tab" id="tab-log" aria-controls="st-log" aria-selected="false" type="button">Log</button>
+  <button role="tab" id="tab-trials" aria-controls="st-trials" aria-selected="false" type="button">Trials</button>
+  <button role="tab" id="tab-bench" aria-controls="st-bench" aria-selected="false" type="button">Bench</button>
+</nav>
+
+<section id="st-helm" role="tabpanel" aria-labelledby="tab-helm">
+
+  <div class="panel">
+    <div class="readout">
+      <div class="hz" id="readout">000.000<span class="lo">.00</span></div>
+      <div class="unit">MHz</div>
+    </div>
+
+    <div class="row" style="margin-top:10px;justify-content:space-between">
+      <div class="row" style="gap:6px">
+        <span class="legend">VFO</span>
+        <button id="btnVfo" class="slim" type="button">A / B</button>
+        <span class="prov asserted" id="provFreq">asserted</span>
+      </div>
+      <div class="row" style="gap:6px">
+        <button class="slim" data-step="-1000000" type="button">-1 MHz</button>
+        <button class="slim" data-step="-100000" type="button">-100 k</button>
+        <button class="slim" data-step="-10000" type="button">-10 k</button>
+        <button class="slim" data-step="-1000" type="button">-1 k</button>
+        <button class="slim" data-step="1000" type="button">+1 k</button>
+        <button class="slim" data-step="10000" type="button">+10 k</button>
+        <button class="slim" data-step="100000" type="button">+100 k</button>
+        <button class="slim" data-step="1000000" type="button">+1 MHz</button>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:12px">
+      <label class="field"><span>Set frequency (MHz)</span>
+        <input type="text" id="freqIn" inputmode="decimal" placeholder="14.25000"></label>
+      <label class="field"><span>Mode</span>
+        <select id="modeSel"></select></label>
+      <label class="field"><span>Repeater shift</span>
+        <select id="shiftSel">
+          <option value="simplex">Simplex</option>
+          <option value="minus">Minus</option>
+          <option value="plus">Plus</option>
+        </select></label>
+      <label class="field"><span>Shift offset (MHz)</span>
+        <input type="text" id="offsetIn" inputmode="decimal" value="0.600"></label>
+      <label class="field"><span>Tone mode</span>
+        <select id="toneModeSel">
+          <option value="off">Off</option>
+          <option value="encdec">Tone enc + dec</option>
+          <option value="ctcss">CTCSS</option>
+          <option value="dcs">DCS</option>
+        </select></label>
+      <label class="field"><span>CTCSS tone (Hz)</span>
+        <select id="toneSel"></select></label>
+      <label class="field"><span>DCS code</span>
+        <select id="dcsSel"></select></label>
+      <label class="field"><span>Clarifier (Hz)</span>
+        <input type="number" id="clarIn" value="0" step="10" min="-9990" max="9990"></label>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <button id="btnApply" type="button">Send to radio</button>
+      <button id="btnRead" type="button">Read radio</button>
+      <button id="btnSplit" type="button">Split</button>
+      <button id="btnClar" type="button">Clarifier</button>
+      <button id="btnLock" type="button">Dial lock</button>
+      <span class="grow"></span>
+      <button id="btnPtt" class="danger" type="button">Transmit</button>
+    </div>
+    <p class="tiny" style="margin:8px 0 0">Hold the space bar to transmit while this station is open. Release to drop back to receive.</p>
+  </div>
+
+  <div class="panel">
+    <div class="row" style="justify-content:space-between">
+      <span class="legend">Meters</span>
+      <label class="check"><input type="checkbox" id="pollChk" checked><span class="tiny">Poll status</span></label>
+    </div>
+    <div class="stack" style="margin-top:10px">
+      <div class="meter">
+        <span class="legend" style="min-width:32px">S</span>
+        <span class="bars" id="sBars" aria-hidden="true"></span>
+        <span class="val" id="sVal">--</span>
+      </div>
+      <div class="meter txm">
+        <span class="legend" style="min-width:32px">PO</span>
+        <span class="bars" id="pBars" aria-hidden="true"></span>
+        <span class="val" id="pVal">--</span>
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px;gap:14px">
+      <span class="lamp" id="lampCt"><i></i>Tone match</span>
+      <span class="lamp" id="lampDisc"><i></i>Centred</span>
+      <span class="lamp tx" id="lampSwr"><i></i>High SWR</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <span class="legend">Shadow state</span>
+    <p class="tiny" style="margin:6px 0 10px">The FT-897D will only report frequency, mode, and the two status bytes. Everything else is what Halyard last sent, not what the radio confirms. Solid green means the radio said so. Dashed amber means Halyard asserted it.</p>
+    <div id="shadowGrid" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))"></div>
+  </div>
+</section>
+
+<section id="st-scope" role="tabpanel" aria-labelledby="tab-scope" hidden>
+  <div class="panel">
+    <div class="notice">This bandscope is built by actually retuning the radio, one step at a time, and reading the S-meter at each stop. It is slow, it takes the receiver away from you while it runs, and the S-meter only has 16 levels, so the trace is a coarse staircase and not a spectrum analyser. Open the squelch first or every stop reads zero.</div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin-top:12px">
+      <label class="field"><span>Centre (MHz)</span><input type="text" id="scCentre" inputmode="decimal" value="145.000"></label>
+      <label class="field"><span>Span (kHz)</span><input type="number" id="scSpan" value="200" min="5" max="20000" step="5"></label>
+      <label class="field"><span>Step (kHz)</span><input type="number" id="scStep" value="5" min="0.01" max="1000" step="0.01"></label>
+      <label class="field"><span>Dwell (ms)</span><input type="number" id="scDwell" value="60" min="10" max="2000" step="10"></label>
+      <label class="field"><span>Sweeps kept</span><input type="number" id="scKeep" value="24" min="1" max="120" step="1"></label>
+      <label class="field"><span>Mode while sweeping</span><select id="scMode"></select></label>
+      <label class="field"><span>Band preset</span><select id="scPreset"></select></label>
+      <label class="field"><span>Trace</span><select id="scTrace">
+        <option value="live">Live sweep</option>
+        <option value="hold">Peak hold</option>
+        <option value="avg">Average</option>
+      </select></label>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button id="btnSweep" type="button">Start sweep</button>
+      <button id="btnSweepOnce" type="button">Single sweep</button>
+      <button id="btnScopeClear" type="button">Clear</button>
+      <button id="btnScopePng" type="button">Save PNG</button>
+      <button id="btnScopeCsv" type="button">Save CSV</button>
+      <button id="btnScopeHarvest" type="button">Harvest peaks</button>
+      <span class="grow"></span>
+      <span class="tiny" id="scEstimate"></span>
+    </div>
+  </div>
+
+  <div class="panel scope">
+    <canvas id="scopeCanvas" width="1000" height="300" role="img"
+      aria-label="Swept S-meter bandscope trace with waterfall history"></canvas>
+    <div class="caption">
+      <span class="tiny mono" id="scLeft">--</span>
+      <span class="tiny" id="scStatus">Idle</span>
+      <span class="tiny mono" id="scRight">--</span>
+    </div>
+    <div class="row" style="margin-top:8px;gap:8px">
+      <span class="legend">Markers</span>
+      <button id="btnMarkA" class="slim" type="button">Set A</button>
+      <button id="btnMarkB" class="slim" type="button">Set B</button>
+      <button id="btnMarkClear" class="slim" type="button">Clear</button>
+      <span class="tiny mono" id="markRead">Click the trace to place a marker</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <span class="legend">Peaks in the last sweep</span>
+    <div class="tablewrap" style="margin-top:8px;max-height:30vh">
+      <table><thead><tr><th>Frequency</th><th>S</th><th></th></tr></thead>
+      <tbody id="peakBody"></tbody></table>
+    </div>
+  </div>
+</section>
+
+<section id="st-locker" role="tabpanel" aria-labelledby="tab-locker" hidden>
+  <div class="panel">
+    <div class="notice">The FT-897D CAT set has no memory read or write commands, so this locker lives in your browser, not in the radio. Recalling a channel simply sends its frequency, mode, shift, and tone to the current VFO.</div>
+    <div class="row" style="margin-top:12px">
+      <button id="btnChanNew" type="button">New channel</button>
+      <button id="btnChanFromVfo" type="button">Capture from VFO</button>
+      <button id="btnChanCsvIn" type="button">Import CSV</button>
+      <button id="btnChanCsvOut" type="button">Export CSV</button>
+      <span class="grow"></span>
+      <label class="field" style="max-width:230px"><span>Find</span>
+        <input type="search" id="chanFind" placeholder="Name, frequency, tag"></label>
+      <label class="check"><input type="checkbox" id="chanArchived"><span class="tiny">Show archived</span></label>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="tablewrap">
+      <table><thead><tr>
+        <th>Name</th><th>Frequency</th><th>Mode</th><th>Shift</th><th>Tone</th><th>Tag</th><th>Actions</th>
+      </tr></thead><tbody id="chanBody"></tbody></table>
+    </div>
+    <p class="tiny" id="chanCount" style="margin:8px 0 0"></p>
+  </div>
+</section>
+
+<section id="st-log" role="tabpanel" aria-labelledby="tab-log" hidden>
+  <div class="panel">
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">
+      <label class="field"><span>Call worked</span><input type="text" id="qCall" placeholder="W1AW"></label>
+      <label class="field"><span>RST sent</span><input type="text" id="qSent" value="59"></label>
+      <label class="field"><span>RST received</span><input type="text" id="qRcvd" value="59"></label>
+      <label class="field"><span>Name</span><input type="text" id="qName"></label>
+      <label class="field"><span>Location</span><input type="text" id="qQth"></label>
+      <label class="field"><span>Grid</span><input type="text" id="qGrid" placeholder="FM19"></label>
+      <label class="field"><span>Power (W)</span><input type="number" id="qPwr" value="20" min="0" step="1"></label>
+      <label class="field"><span>My grid</span><input type="text" id="myGrid" placeholder="FM19" maxlength="8"></label>
+    </div>
+    <label class="field" style="margin-top:10px"><span>Notes</span><textarea id="qNote"></textarea></label>
+    <div class="row" style="margin-top:10px">
+      <button id="btnQsoAdd" type="button">Log this contact</button>
+      <span class="tiny" id="qStamp"></span>
+      <span class="tiny" id="qDup"></span>
+      <span class="grow"></span>
+      <button id="btnAdif" type="button">Export ADIF</button>
+      <button id="btnQsoCsv" type="button">Export CSV</button>
+      <button id="btnAdifIn" type="button">Import ADIF</button>
+    </div>
+    <p class="tiny" style="margin:8px 0 0">Frequency, mode, and date are taken from the radio at the moment you log. Times are recorded in UTC.</p>
+  </div>
+  <div class="panel">
+    <div class="row" style="justify-content:space-between">
+      <span class="legend">Contacts</span>
+      <label class="field" style="max-width:230px"><span>Find</span><input type="search" id="qFind"></label>
+    </div>
+    <div class="tablewrap" style="margin-top:8px">
+      <table><thead><tr>
+        <th>UTC</th><th>Call</th><th>Frequency</th><th>Band</th><th>Mode</th><th>Sent</th><th>Rcvd</th><th>Grid</th><th>Distance</th><th>Notes</th><th>Actions</th>
+      </tr></thead><tbody id="qsoBody"></tbody></table>
+    </div>
+    <p class="tiny" id="qsoCount" style="margin:8px 0 0"></p>
+  </div>
+</section>
+
+<section id="st-trials" role="tabpanel" aria-labelledby="tab-trials" hidden>
+  <div class="panel">
+    <div class="notice">Halyard ships with the FT-897D protocol as it is described in print. Several of those descriptions disagree with each other, and none of them are your radio. These trials replace each assumption with a measurement. Work through them once with the radio on the bench, and the constants below stop being guesses.</div>
+    <div class="row" style="margin-top:12px">
+      <button id="btnTrialAll" type="button">Run every trial</button>
+      <button id="btnTrialReport" type="button">Save report</button>
+      <button id="btnTrialReset" type="button">Clear all findings</button>
+      <span class="grow"></span>
+      <span class="tiny" id="trialSummary"></span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <span class="legend">Constants</span>
+    <p class="tiny" style="margin:6px 0 10px">Solid green means your radio told Halyard this. Dashed amber means it came out of a manual and has never been checked.</p>
+    <div id="constGrid" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr))"></div>
+  </div>
+
+  <div class="panel">
+    <span class="legend">Trials</span>
+    <div id="trialList" class="stack" style="margin-top:10px"></div>
+  </div>
+
+  <div class="panel">
+    <div class="row" style="justify-content:space-between">
+      <span class="legend">Evidence</span>
+      <button id="btnEvidClear" class="slim" type="button">Clear</button>
+    </div>
+    <pre class="console" id="evidOut" style="margin-top:8px">No measurements recorded yet.</pre>
+  </div>
+</section>
+
+<section id="st-bench" role="tabpanel" aria-labelledby="tab-bench" hidden>
+  <div class="panel">
+    <span class="legend">Virtual radio</span>
+    <p class="tiny" style="margin:6px 0 10px">A software FT-897D that speaks the same 5 byte protocol, so Halyard can be exercised without a cable. Fault injection makes it misbehave the way real serial links do.</p>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+      <label class="field"><span>Reply delay (ms)</span><input type="number" id="vDelay" value="18" min="0" max="2000"></label>
+      <label class="field"><span>Dropped replies (%)</span><input type="number" id="vDrop" value="0" min="0" max="100"></label>
+      <label class="field"><span>Corrupt bytes (%)</span><input type="number" id="vCorrupt" value="0" min="0" max="100"></label>
+      <label class="field"><span>Noise floor (S)</span><input type="number" id="vFloor" value="1" min="0" max="9"></label>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <label class="check"><input type="checkbox" id="vSignals" checked><span class="tiny">Plant test signals across the band</span></label>
+    </div>
+  </div>
+
+  <div class="panel">
+    <span class="legend">Status byte polarity</span>
+    <p class="tiny" style="margin:6px 0 10px">Published descriptions of the FT-897D status bytes disagree on which way round several bits read. These are the manual overrides. To settle a polarity by measurement instead of by guesswork, run the matching trial on the Trials station, which sets these for you and records why.</p>
+    <div class="row">
+      <label class="check"><input type="checkbox" id="invSql"><span class="tiny">Invert signal present</span></label>
+      <label class="check"><input type="checkbox" id="invTone"><span class="tiny">Invert tone match</span></label>
+      <label class="check"><input type="checkbox" id="invDisc"><span class="tiny">Invert centred</span></label>
+      <label class="check"><input type="checkbox" id="invPtt"><span class="tiny">Invert PTT</span></label>
+      <label class="check"><input type="checkbox" id="invSplit"><span class="tiny">Invert split</span></label>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="row" style="justify-content:space-between">
+      <span class="legend">Self test</span>
+      <div class="row">
+        <button id="btnSelfTest" type="button">Run self test</button>
+        <label class="check"><input type="checkbox" id="dbgChk"><span class="tiny">Debug logging</span></label>
+      </div>
+    </div>
+    <pre class="console" id="testOut" style="margin-top:8px">Not run.</pre>
+  </div>
+
+  <div class="panel">
+    <div class="row" style="justify-content:space-between">
+      <span class="legend">Traffic</span>
+      <div class="row">
+        <button id="btnTrafClear" class="slim" type="button">Clear</button>
+        <button id="btnTrafSave" class="slim" type="button">Save log</button>
+      </div>
+    </div>
+    <pre class="console" id="trafOut" style="margin-top:8px"></pre>
+  </div>
+
+  <div class="panel">
+    <span class="legend">Instrument data</span>
+    <div class="row" style="margin-top:8px">
+      <button id="btnExportAll" type="button">Export everything</button>
+      <button id="btnImportAll" type="button">Import</button>
+      <button id="btnPower" type="button">Radio power on</button>
+      <button id="btnPowerOff" type="button">Radio power off</button>
+    </div>
+  </div>
+</section>
+
+<dialog id="trialDlg">
+  <div class="dhead"><span class="legend" id="trialDlgTitle">Trial</span></div>
+  <div class="dbody">
+    <p id="trialPrompt" style="margin:0 0 12px"></p>
+    <div id="trialAnswer"></div>
+  </div>
+  <div class="dfoot">
+    <button type="button" id="trialAbort">Abandon trial</button>
+    <button type="button" id="trialGo">Continue</button>
+  </div>
+</dialog>
+
+<dialog id="aboutDlg">
+  <div class="dhead"><span class="legend">About Halyard</span></div>
+  <div class="dbody" id="aboutBody"></div>
+  <div class="dfoot"><button type="button" data-close="aboutDlg">Close</button></div>
+</dialog>
+
+<dialog id="chanDlg">
+  <div class="dhead"><span class="legend" id="chanDlgTitle">Channel</span></div>
+  <div class="dbody">
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+      <label class="field"><span>Name</span><input type="text" id="cName"></label>
+      <label class="field"><span>Frequency (MHz)</span><input type="text" id="cFreq" inputmode="decimal"></label>
+      <label class="field"><span>Mode</span><select id="cMode"></select></label>
+      <label class="field"><span>Shift</span><select id="cShift">
+        <option value="simplex">Simplex</option><option value="minus">Minus</option><option value="plus">Plus</option>
+      </select></label>
+      <label class="field"><span>Shift offset (MHz)</span><input type="text" id="cOffset" value="0.600"></label>
+      <label class="field"><span>Tone mode</span><select id="cToneMode">
+        <option value="off">Off</option><option value="encdec">Tone enc + dec</option>
+        <option value="ctcss">CTCSS</option><option value="dcs">DCS</option>
+      </select></label>
+      <label class="field"><span>CTCSS tone</span><select id="cTone"></select></label>
+      <label class="field"><span>DCS code</span><select id="cDcs"></select></label>
+      <label class="field"><span>Tag</span><input type="text" id="cTag" placeholder="repeater, net, simplex"></label>
+    </div>
+  </div>
+  <div class="dfoot">
+    <button type="button" data-close="chanDlg">Cancel</button>
+    <button type="button" id="cSave">Save channel</button>
+  </div>
+</dialog>
+
+<footer class="tiny" style="margin-top:22px;border-top:1px solid var(--rule);padding-top:10px">
+  Halyard <span id="verFoot"></span> &middot; Field Instrument FI-119 &middot; GPL-3.0 &middot; runs from disk, no server
+</footer>
+</div>
+
+<script>
+"use strict";
+/* =====================================================================
+   HALYARD - Yaesu FT-897D control head
+   Single file, no build step, runs from file://
+   GPL-3.0
+   ===================================================================== */
+
+const VERSION = "1.4.0";
+const FI = "FI-119";
+const NS = "halyard.v1";
+
+/* ---------- tiny helpers ---------- */
+const $  = (id) => document.getElementById(id);
+const el = (tag, attrs, kids) => {
+  const n = document.createElement(tag);
+  if (attrs) for (const k in attrs) {
+    if (k === "class") n.className = attrs[k];
+    else if (k === "text") n.textContent = attrs[k];
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), attrs[k]);
+    else if (attrs[k] !== null && attrs[k] !== undefined) n.setAttribute(k, attrs[k]);
+  }
+  if (kids) for (const c of [].concat(kids)) if (c) n.appendChild(c);
+  return n;
+};
+const clear = (n) => { while (n.firstChild) n.removeChild(n.firstChild); };
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+const hex = (b) => b.toString(16).toUpperCase().padStart(2, "0");
+const hexs = (a) => Array.from(a).map(hex).join(" ");
+
+function toast(msg, bad) {
+  const box = $("toast");
+  const d = el("div", { class: bad ? "bad" : "", text: msg });
+  box.appendChild(d);
+  setTimeout(() => d.remove(), 4200);
+}
+function download(name, text, mime) {
+  const blob = new Blob([text], { type: mime || "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = el("a", { href: url, download: name });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+/* =====================================================================
+   CAT protocol for the FT-897D
+   Every command is exactly five bytes: P1 P2 P3 P4 OPCODE.
+   Only three commands return anything at all.
+   ===================================================================== */
+const CAT = (() => {
+
+  const OP = {
+    LOCK_ON: 0x00, LOCK_OFF: 0x80,
+    PTT_ON: 0x08, PTT_OFF: 0x88,
+    SET_FREQ: 0x01, SET_MODE: 0x07,
+    CLAR_ON: 0x05, CLAR_OFF: 0x85, CLAR_FREQ: 0xF5,
+    VFO_TOGGLE: 0x81,
+    SPLIT_ON: 0x02, SPLIT_OFF: 0x82,
+    RPT_SHIFT: 0x09, RPT_OFFSET: 0xF9,
+    TONE_MODE: 0x0A, CTCSS_FREQ: 0x0B, DCS_CODE: 0x0C,
+    READ_RX: 0xE7, READ_TX: 0xF7, READ_FREQ_MODE: 0x03,
+    PWR_ON: 0x0F, PWR_OFF: 0x8F
+  };
+
+  const MODES = [
+    { code: 0x00, id: "LSB",  label: "LSB",   ssb: true  },
+    { code: 0x01, id: "USB",  label: "USB",   ssb: true  },
+    { code: 0x02, id: "CW",   label: "CW",    ssb: false },
+    { code: 0x03, id: "CWR",  label: "CW-R",  ssb: false },
+    { code: 0x04, id: "AM",   label: "AM",    ssb: false },
+    { code: 0x06, id: "WFM",  label: "WFM",   ssb: false },
+    { code: 0x08, id: "FM",   label: "FM",    ssb: false },
+    { code: 0x0A, id: "DIG",  label: "DIG",   ssb: false },
+    { code: 0x0C, id: "PKT",  label: "PKT",   ssb: false }
+  ];
+  const modeByCode = (c) => MODES.find(m => m.code === c) || null;
+  const modeById   = (i) => MODES.find(m => m.id === i) || null;
+
+  const SHIFT = { simplex: 0x09, minus: 0x49, plus: 0x89 };
+  const SHIFT_BY_CODE = { 0x09: "simplex", 0x49: "minus", 0x89: "plus" };
+
+  const TONE_MODE = { dcs: 0x2A, ctcss: 0x4A, off: 0x8A, encdec: 0x0A };
+
+  const CTCSS = [67.0,69.3,71.9,74.4,77.0,79.7,82.5,85.4,88.5,91.5,94.8,97.4,100.0,103.5,
+    107.2,110.9,114.8,118.8,123.0,127.3,131.8,136.5,141.3,146.2,151.4,156.7,159.8,162.2,
+    165.5,167.9,171.3,173.8,177.3,179.9,183.5,186.2,189.9,192.8,196.6,199.5,203.5,206.5,
+    210.7,218.1,225.7,229.1,233.6,241.8,250.3,254.1];
+
+  const DCS = [23,25,26,31,32,36,43,47,51,53,54,65,71,72,73,74,114,115,116,122,125,131,132,
+    134,143,145,152,155,156,162,165,172,174,205,212,223,225,226,243,244,245,246,251,252,255,
+    261,263,265,266,271,274,306,311,315,325,331,332,343,346,351,356,364,365,371,411,412,413,
+    423,431,432,445,446,452,454,455,462,464,465,466,503,506,516,523,526,532,546,565,606,612,
+    624,627,631,632,654,662,664,703,712,723,731,732,734,743,754];
+
+  /* ---- BCD helpers ---- */
+  function bcdEncode(value, byteCount) {
+    const digits = byteCount * 2;
+    const n = Math.round(value);
+    if (n < 0) throw new RangeError("bcdEncode: negative");
+    const s = String(n).padStart(digits, "0");
+    if (s.length > digits) throw new RangeError("bcdEncode: " + n + " needs more than " + digits + " digits");
+    const out = new Uint8Array(byteCount);
+    for (let i = 0; i < byteCount; i++) {
+      out[i] = (Number(s[i * 2]) << 4) | Number(s[i * 2 + 1]);
+    }
+    return out;
+  }
+  function bcdDecode(bytes) {
+    let s = "";
+    for (const b of bytes) {
+      const hi = b >> 4, lo = b & 0x0F;
+      if (hi > 9 || lo > 9) throw new RangeError("bcdDecode: byte " + hex(b) + " is not BCD");
+      s += String(hi) + String(lo);
+    }
+    return Number(s);
+  }
+
+  const block = (p1, p2, p3, p4, op) => Uint8Array.from([p1 & 0xFF, p2 & 0xFF, p3 & 0xFF, p4 & 0xFF, op & 0xFF]);
+  const simple = (op) => block(0, 0, 0, 0, op);
+
+  /* ---- encoders ---- */
+  function setFrequency(hz) {
+    if (!Number.isFinite(hz) || hz < 0) throw new RangeError("setFrequency: bad value");
+    if (hz % 10 !== 0) hz = Math.round(hz / 10) * 10;      // radio resolution is 10 Hz
+    if (hz > 999999990) throw new RangeError("setFrequency: above 999.99999 MHz");
+    const b = bcdEncode(hz / 10, 4);
+    return block(b[0], b[1], b[2], b[3], OP.SET_FREQ);
+  }
+  function setMode(id) {
+    const m = modeById(id);
+    if (!m) throw new RangeError("setMode: unknown mode " + id);
+    return block(m.code, 0, 0, 0, OP.SET_MODE);
+  }
+  function setRepeaterShift(dir) {
+    const p = SHIFT[dir];
+    if (p === undefined) throw new RangeError("setRepeaterShift: unknown direction " + dir);
+    return block(p, 0, 0, 0, OP.RPT_SHIFT);
+  }
+  function setRepeaterOffset(hz) {
+    if (!Number.isFinite(hz) || hz < 0) throw new RangeError("setRepeaterOffset: bad value");
+    const b = bcdEncode(Math.round(hz / 10), 4);
+    return block(b[0], b[1], b[2], b[3], OP.RPT_OFFSET);
+  }
+  function setToneMode(mode) {
+    const p = TONE_MODE[mode];
+    if (p === undefined) throw new RangeError("setToneMode: unknown mode " + mode);
+    return block(p, 0, 0, 0, OP.TONE_MODE);
+  }
+  function setCtcss(txHz, rxHz) {
+    if (rxHz === undefined) rxHz = txHz;
+    const t = bcdEncode(Math.round(txHz * 10), 2);
+    const r = bcdEncode(Math.round(rxHz * 10), 2);
+    return block(t[0], t[1], r[0], r[1], OP.CTCSS_FREQ);
+  }
+  function setDcs(txCode, rxCode) {
+    if (rxCode === undefined) rxCode = txCode;
+    const t = bcdEncode(txCode, 2);
+    const r = bcdEncode(rxCode, 2);
+    return block(t[0], t[1], r[0], r[1], OP.DCS_CODE);
+  }
+  function setClarifierOffset(hz) {
+    const sign = hz < 0 ? 0xFF : 0x00;
+    const mag = Math.min(9990, Math.abs(Math.round(hz / 10) * 10));
+    const b = bcdEncode(Math.round(mag / 10), 2);   // 10 Hz units, four digits
+    return block(sign, 0x00, b[0], b[1], OP.CLAR_FREQ);
+  }
+
+  /* ---- decoders ---- */
+  function decodeFreqMode(bytes) {
+    if (!bytes || bytes.length !== 5) throw new RangeError("decodeFreqMode: expected 5 bytes");
+    const hz = bcdDecode(bytes.slice(0, 4)) * 10;
+    const m = modeByCode(bytes[4]);
+    return { hz, mode: m ? m.id : null, modeCode: bytes[4] };
+  }
+  // The polarity of several of these bits is reported inconsistently in the wild,
+  // so every one of them can be inverted from the Bench station.
+  function decodeRxStatus(b, inv) {
+    inv = inv || {};
+    const smeter = b & 0x0F;
+    let signal = !(b & 0x80);        // bit 7 high normally means squelched
+    let toneOk = !(b & 0x40);        // bit 6 high normally means code mismatch
+    let centred = !(b & 0x20);       // bit 5 high normally means off centre
+    if (inv.sql)  signal  = !signal;
+    if (inv.tone) toneOk  = !toneOk;
+    if (inv.disc) centred = !centred;
+    return { raw: b, smeter, signal, toneOk, centred };
+  }
+  function decodeTxStatus(b, inv) {
+    inv = inv || {};
+    const po = b & 0x0F;
+    let ptt = !(b & 0x80);           // bit 7 low normally means transmitting
+    const hiSwr = !!(b & 0x40);
+    let split = !(b & 0x20);
+    if (inv.ptt) ptt = !ptt;
+    if (inv.split) split = !split;
+    return { raw: b, po, ptt, hiSwr, split };
+  }
+
+  // Raw 0 to 15 maps onto S0 to S9 then S9 plus 10 dB per step.
+  function sMeterLabel(raw) {
+    raw = clamp(Math.round(raw), 0, 15);
+    if (raw <= 9) return "S" + raw;
+    return "S9+" + ((raw - 9) * 10);
+  }
+
+  /* ---- frequency text ---- */
+  function parseMHz(text) {
+    if (typeof text === "number") return Math.round(text * 1e6);
+    const t = String(text).trim().replace(/\s/g, "");
+    if (!t) return null;
+    // accept 145.500, 145,500, 14.250.00 (Yaesu style), or a bare Hz count
+    let s = t.replace(/,/g, ".");
+    const parts = s.split(".");
+    if (parts.length > 2) s = parts[0] + "." + parts.slice(1).join("");
+    if (!/^\d+(\.\d*)?$/.test(s)) return null;
+    const hz = Math.round(Number(s) * 1e6);
+    if (!Number.isFinite(hz) || hz < 0) return null;
+    return Math.round(hz / 10) * 10;
+  }
+  function formatMHz(hz) {
+    if (!Number.isFinite(hz)) return "---.------";
+    const s = String(Math.round(hz)).padStart(9, "0");
+    return s.slice(0, 3).replace(/^0+(?=\d)/, "") + "." + s.slice(3, 6) + "." + s.slice(6, 8);
+  }
+
+  return { OP, MODES, SHIFT, SHIFT_BY_CODE, TONE_MODE, CTCSS, DCS,
+    modeByCode, modeById, bcdEncode, bcdDecode, block, simple,
+    setFrequency, setMode, setRepeaterShift, setRepeaterOffset, setToneMode,
+    setCtcss, setDcs, setClarifierOffset,
+    decodeFreqMode, decodeRxStatus, decodeTxStatus, sMeterLabel,
+    parseMHz, formatMHz };
+})();
+
+/* =====================================================================
+   Virtual FT-897D
+   Speaks the same five byte protocol so the whole instrument can be
+   exercised with no cable. Faults are injectable.
+   ===================================================================== */
+class VirtualRadio {
+  constructor(opts) {
+    this.opts = Object.assign({ delayMs: 18, dropPct: 0, corruptPct: 0, floor: 1, signals: true }, opts || {});
+    this.state = {
+      on: true, hz: 145000000, modeCode: 0x08, vfo: "A",
+      ptt: false, split: false, lock: false, clar: false, clarHz: 0,
+      shift: 0x09, offsetHz: 600000, toneMode: 0x8A, ctcss: 885, dcs: 23
+    };
+    this.rx = new Uint8Array(0);
+    this.plan = [
+      { hz: 145030000, s: 9 }, { hz: 145110000, s: 6 }, { hz: 145390000, s: 14 },
+      { hz: 146520000, s: 11 }, { hz: 144200000, s: 4 }, { hz: 14250000, s: 8 },
+      { hz: 7180000, s: 12 }, { hz: 28400000, s: 5 }
+    ];
+    this.written = [];
+  }
+  _rand() { return Math.random(); }
+  _signalAt(hz) {
+    let best = this.opts.floor;
+    if (this.opts.signals) {
+      for (const p of this.plan) {
+        const off = Math.abs(hz - p.hz);
+        if (off < 12000) {
+          const v = p.s * (1 - off / 12000);
+          if (v > best) best = v;
+        }
+      }
+    }
+    return clamp(Math.round(best), 0, 15);
+  }
+  /* accepts a 5 byte block, returns a Uint8Array reply (possibly empty) */
+  async send(cmd) {
+    this.written.push(Uint8Array.from(cmd));
+    await sleep(this.opts.delayMs);
+    const op = cmd[4], s = this.state;
+    let reply = new Uint8Array(0);
+
+    if (!s.on && op !== CAT.OP.PWR_ON) return reply;
+
+    switch (op) {
+      case CAT.OP.PWR_ON:  s.on = true;  break;
+      case CAT.OP.PWR_OFF: s.on = false; break;
+      case CAT.OP.SET_FREQ: s.hz = CAT.bcdDecode(cmd.slice(0, 4)) * 10; break;
+      case CAT.OP.SET_MODE: s.modeCode = cmd[0]; break;
+      case CAT.OP.PTT_ON:  s.ptt = true;  break;
+      case CAT.OP.PTT_OFF: s.ptt = false; break;
+      case CAT.OP.SPLIT_ON:  s.split = true;  break;
+      case CAT.OP.SPLIT_OFF: s.split = false; break;
+      case CAT.OP.LOCK_ON:  s.lock = true;  break;
+      case CAT.OP.LOCK_OFF: s.lock = false; break;
+      case CAT.OP.CLAR_ON:  s.clar = true;  break;
+      case CAT.OP.CLAR_OFF: s.clar = false; break;
+      case CAT.OP.CLAR_FREQ:
+        s.clarHz = (cmd[0] === 0xFF ? -1 : 1) * CAT.bcdDecode(cmd.slice(2, 4)) * 10; break;
+      case CAT.OP.VFO_TOGGLE: s.vfo = (s.vfo === "A" ? "B" : "A"); break;
+      case CAT.OP.RPT_SHIFT: s.shift = cmd[0]; break;
+      case CAT.OP.RPT_OFFSET: s.offsetHz = CAT.bcdDecode(cmd.slice(0, 4)) * 10; break;
+      case CAT.OP.TONE_MODE: s.toneMode = cmd[0]; break;
+      case CAT.OP.CTCSS_FREQ: s.ctcss = CAT.bcdDecode(cmd.slice(0, 2)); break;
+      case CAT.OP.DCS_CODE: s.dcs = CAT.bcdDecode(cmd.slice(0, 2)); break;
+      case CAT.OP.READ_FREQ_MODE: {
+        const b = CAT.bcdEncode(Math.round(s.hz / 10), 4);
+        reply = Uint8Array.from([b[0], b[1], b[2], b[3], s.modeCode]);
+        break;
+      }
+      case CAT.OP.READ_RX: {
+        const sm = s.ptt ? 0 : this._signalAt(s.hz);
+        let b = sm & 0x0F;
+        if (sm <= this.opts.floor) b |= 0x80;                   // squelched
+        if (s.toneMode !== 0x8A && sm <= this.opts.floor) b |= 0x40;
+        if (sm > this.opts.floor) b |= 0x00; else b |= 0x20;
+        reply = Uint8Array.from([b]);
+        break;
+      }
+      case CAT.OP.READ_TX: {
+        let b = 0;
+        if (!s.ptt) b |= 0x80;
+        if (!s.split) b |= 0x20;
+        if (s.ptt) b |= clamp(Math.round(12 - (Math.abs(s.hz - 145000000) / 4e8)), 0, 15);
+        reply = Uint8Array.from([b]);
+        break;
+      }
+      default: break;
+    }
+
+    if (reply.length && this._rand() * 100 < this.opts.dropPct) return new Uint8Array(0);
+    if (reply.length && this._rand() * 100 < this.opts.corruptPct) {
+      const out = Uint8Array.from(reply);
+      out[Math.floor(this._rand() * out.length)] ^= 0xFF;
+      return out;
+    }
+    return reply;
+  }
+}
+
+/* =====================================================================
+   Transports
+   ===================================================================== */
+class VirtualTransport {
+  constructor(radio) { this.radio = radio; this.open = false; this.kind = "virtual"; }
+  async connect() { this.open = true; }
+  async disconnect() { this.open = false; }
+  async exchange(cmd, expectBytes, timeoutMs) {
+    if (!this.open) throw new Error("Virtual radio is not connected");
+    const reply = await Promise.race([
+      this.radio.send(cmd),
+      sleep(timeoutMs).then(() => { throw new Error("timeout"); })
+    ]);
+    if (expectBytes === 0) return new Uint8Array(0);
+    if (reply.length < expectBytes) throw new Error("short reply (" + reply.length + " of " + expectBytes + ")");
+    return reply.slice(0, expectBytes);
+  }
+}
+
+class SerialTransport {
+  constructor(baud) { this.baud = baud; this.port = null; this.open = false; this.kind = "serial";
+    this.reader = null; this.writer = null; this.buf = []; }
+  static supported() { return typeof navigator !== "undefined" && !!navigator.serial; }
+  async connect() {
+    if (!SerialTransport.supported()) throw new Error("This browser has no Web Serial. Use Chrome or Edge over https or from disk.");
+    this.port = await navigator.serial.requestPort();
+    await this.port.open({ baudRate: this.baud, dataBits: 8, stopBits: 2, parity: "none", flowControl: "none" });
+    this.writer = this.port.writable.getWriter();
+    this.reader = this.port.readable.getReader();
+    this.open = true;
+    this._pump();
+  }
+  async _pump() {
+    try {
+      while (this.open) {
+        const { value, done } = await this.reader.read();
+        if (done) break;
+        if (value) for (const b of value) this.buf.push(b);
+      }
+    } catch (e) { /* closed under us */ }
+  }
+  async disconnect() {
+    this.open = false;
+    try { if (this.reader) { await this.reader.cancel(); this.reader.releaseLock(); } } catch (e) {}
+    try { if (this.writer) this.writer.releaseLock(); } catch (e) {}
+    try { if (this.port) await this.port.close(); } catch (e) {}
+    this.port = null;
+  }
+  async exchange(cmd, expectBytes, timeoutMs) {
+    if (!this.open) throw new Error("Serial port is not connected");
+    this.buf.length = 0;
+    await this.writer.write(Uint8Array.from(cmd));
+    if (expectBytes === 0) return new Uint8Array(0);
+    const deadline = Date.now() + timeoutMs;
+    while (this.buf.length < expectBytes) {
+      if (Date.now() > deadline) throw new Error("timeout waiting for " + expectBytes + " byte reply");
+      await sleep(4);
+    }
+    return Uint8Array.from(this.buf.splice(0, expectBytes));
+  }
+}
+
+/* =====================================================================
+   Link
+   Paced command queue plus the shadow model of the radio.
+   Provenance is tracked per field: "confirmed" if the radio told us,
+   "asserted" if we only sent it.
+   ===================================================================== */
+class Link {
+  constructor() {
+    this.transport = null;
+    this.queue = Promise.resolve();
+    this.gapMs = 40;          // the FT-897D drops blocks sent back to back
+    this.timeoutMs = 900;
+    this.retries = 2;
+    this.listeners = [];
+    this.traffic = [];
+    this.debug = false;
+    this.inv = { sql: false, tone: false, disc: false, ptt: false, split: false };
+    this.shadow = {
+      hz: { v: 145000000, p: "asserted" },
+      mode: { v: "FM", p: "asserted" },
+      vfo: { v: "A", p: "asserted" },
+      split: { v: false, p: "asserted" },
+      lock: { v: false, p: "asserted" },
+      clar: { v: false, p: "asserted" },
+      clarHz: { v: 0, p: "asserted" },
+      shift: { v: "simplex", p: "asserted" },
+      offsetHz: { v: 600000, p: "asserted" },
+      toneMode: { v: "off", p: "asserted" },
+      ctcss: { v: 88.5, p: "asserted" },
+      dcs: { v: 23, p: "asserted" },
+      ptt: { v: false, p: "asserted" },
+      smeter: { v: null, p: "asserted" },
+      po: { v: null, p: "asserted" },
+      signal: { v: false, p: "asserted" },
+      toneOk: { v: false, p: "asserted" },
+      centred: { v: false, p: "asserted" },
+      hiSwr: { v: false, p: "asserted" }
+    };
+  }
+  get connected() { return !!(this.transport && this.transport.open); }
+  on(fn) { this.listeners.push(fn); }
+  emit(what) { for (const fn of this.listeners) { try { fn(what, this); } catch (e) { console.error(e); } } }
+
+  set(field, value, provenance) {
+    const s = this.shadow[field];
+    if (!s) return;
+    s.v = value; s.p = provenance || "asserted";
+  }
+  log(dir, bytes, note) {
+    const line = { t: new Date().toISOString().slice(11, 23), dir, bytes: hexs(bytes), note: note || "" };
+    this.traffic.push(line);
+    if (this.traffic.length > 500) this.traffic.splice(0, this.traffic.length - 500);
+    this.emit("traffic");
+  }
+
+  async connect(transport) {
+    if (this.connected) await this.disconnect();
+    this.transport = transport;
+    await transport.connect();
+    this.emit("link");
+  }
+  async disconnect() {
+    if (this.transport) { try { await this.transport.disconnect(); } catch (e) {} }
+    this.transport = null;
+    this.emit("link");
+  }
+
+  /* single serialised, paced, retried exchange */
+  exchange(cmd, expectBytes, note) {
+    const run = async () => {
+      if (!this.connected) throw new Error("No radio connected");
+      let lastErr = null;
+      for (let attempt = 0; attempt <= this.retries; attempt++) {
+        try {
+          if (this.debug) this.log("TX", cmd, note + (attempt ? " (retry " + attempt + ")" : ""));
+          const reply = await this.transport.exchange(cmd, expectBytes, this.timeoutMs);
+          if (this.debug && expectBytes) this.log("RX", reply, note);
+          await sleep(this.gapMs);
+          return reply;
+        } catch (e) {
+          lastErr = e;
+          if (expectBytes === 0) break;      // nothing to wait for, do not hammer the radio
+          await sleep(this.gapMs * 2);
+        }
+      }
+      if (lastErr && expectBytes) { this.log("!!", [], note + ": " + lastErr.message); throw lastErr; }
+      return new Uint8Array(0);
+    };
+    this.queue = this.queue.then(run, run);
+    return this.queue;
+  }
+
+  /* ---- commands ---- */
+  async setFrequency(hz) { await this.exchange(CAT.setFrequency(hz), 0, "set freq " + CAT.formatMHz(hz));
+    this.set("hz", hz, "asserted"); this.emit("state"); }
+  async setMode(id) { await this.exchange(CAT.setMode(id), 0, "set mode " + id);
+    this.set("mode", id, "asserted"); this.emit("state"); }
+  async setPtt(on) { await this.exchange(CAT.simple(on ? CAT.OP.PTT_ON : CAT.OP.PTT_OFF), 0, "ptt " + (on ? "on" : "off"));
+    this.set("ptt", on, "asserted"); this.emit("state"); }
+  async setSplit(on) { await this.exchange(CAT.simple(on ? CAT.OP.SPLIT_ON : CAT.OP.SPLIT_OFF), 0, "split " + on);
+    this.set("split", on, "asserted"); this.emit("state"); }
+  async setLock(on) { await this.exchange(CAT.simple(on ? CAT.OP.LOCK_ON : CAT.OP.LOCK_OFF), 0, "lock " + on);
+    this.set("lock", on, "asserted"); this.emit("state"); }
+  async setClar(on) { await this.exchange(CAT.simple(on ? CAT.OP.CLAR_ON : CAT.OP.CLAR_OFF), 0, "clarifier " + on);
+    this.set("clar", on, "asserted"); this.emit("state"); }
+  async setClarOffset(hz) { await this.exchange(CAT.setClarifierOffset(hz), 0, "clarifier " + hz + " Hz");
+    this.set("clarHz", hz, "asserted"); this.emit("state"); }
+  async toggleVfo() { await this.exchange(CAT.simple(CAT.OP.VFO_TOGGLE), 0, "vfo toggle");
+    this.set("vfo", this.shadow.vfo.v === "A" ? "B" : "A", "asserted"); this.emit("state"); }
+  async setShift(dir) { await this.exchange(CAT.setRepeaterShift(dir), 0, "shift " + dir);
+    this.set("shift", dir, "asserted"); this.emit("state"); }
+  async setOffset(hz) { await this.exchange(CAT.setRepeaterOffset(hz), 0, "offset " + hz);
+    this.set("offsetHz", hz, "asserted"); this.emit("state"); }
+  async setToneMode(m) { await this.exchange(CAT.setToneMode(m), 0, "tone mode " + m);
+    this.set("toneMode", m, "asserted"); this.emit("state"); }
+  async setCtcss(hz) { await this.exchange(CAT.setCtcss(hz), 0, "ctcss " + hz);
+    this.set("ctcss", hz, "asserted"); this.emit("state"); }
+  async setDcs(code) { await this.exchange(CAT.setDcs(code), 0, "dcs " + code);
+    this.set("dcs", code, "asserted"); this.emit("state"); }
+  async power(on) { await this.exchange(CAT.simple(on ? CAT.OP.PWR_ON : CAT.OP.PWR_OFF), 0, "power " + (on ? "on" : "off")); }
+
+  /* ---- reads ---- */
+  async readFreqMode() {
+    const r = await this.exchange(CAT.simple(CAT.OP.READ_FREQ_MODE), 5, "read freq and mode");
+    const d = CAT.decodeFreqMode(r);
+    this.set("hz", d.hz, "confirmed");
+    if (d.mode) this.set("mode", d.mode, "confirmed");
+    this.emit("state");
+    return d;
+  }
+  async readRxStatus() {
+    const r = await this.exchange(CAT.simple(CAT.OP.READ_RX), 1, "read rx status");
+    const d = CAT.decodeRxStatus(r[0], this.inv);
+    this.set("smeter", d.smeter, "confirmed");
+    this.set("signal", d.signal, "confirmed");
+    this.set("toneOk", d.toneOk, "confirmed");
+    this.set("centred", d.centred, "confirmed");
+    this.emit("state");
+    return d;
+  }
+  async readTxStatus() {
+    const r = await this.exchange(CAT.simple(CAT.OP.READ_TX), 1, "read tx status");
+    const d = CAT.decodeTxStatus(r[0], this.inv);
+    this.set("po", d.po, "confirmed");
+    this.set("ptt", d.ptt, "confirmed");
+    this.set("split", d.split, "confirmed");
+    this.set("hiSwr", d.hiSwr, "confirmed");
+    this.emit("state");
+    return d;
+  }
+  /* quiet S-meter read used by the sweep, no shadow churn */
+  async probeS() {
+    const r = await this.exchange(CAT.simple(CAT.OP.READ_RX), 1, "sweep probe");
+    return CAT.decodeRxStatus(r[0], this.inv).smeter;
+  }
+}
+
+const link = new Link();
+
+/* =====================================================================
+   Store: local persistence with schema validated import
+   ===================================================================== */
+const Store = (() => {
+  const key = (k) => NS + "." + k;
+  const mem = {};
+  function get(k, dflt) {
+    try {
+      const raw = localStorage.getItem(key(k));
+      if (raw === null) return (k in mem) ? mem[k] : dflt;
+      return JSON.parse(raw);
+    } catch (e) { return (k in mem) ? mem[k] : dflt; }
+  }
+  function set(k, v) {
+    mem[k] = v;
+    try { localStorage.setItem(key(k), JSON.stringify(v)); } catch (e) { /* storage blocked, stay in memory */ }
+  }
+  return { get, set };
+})();
+
+/* strict, inert validation of imported records */
+const Schema = (() => {
+  const str = (v, max) => (typeof v === "string" ? v.slice(0, max || 120) : "");
+  const num = (v, lo, hi, d) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? clamp(n, lo, hi) : d;
+  };
+  const oneOf = (v, list, d) => (list.indexOf(v) >= 0 ? v : d);
+  const modeIds = CAT.MODES.map(m => m.id);
+
+  function channel(o) {
+    if (!o || typeof o !== "object") return null;
+    const hz = num(o.hz, 0, 999999990, NaN);
+    if (!Number.isFinite(hz)) return null;
+    return {
+      id: str(o.id, 40) || crypto.randomUUID(),
+      name: str(o.name, 40),
+      hz: Math.round(hz / 10) * 10,
+      mode: oneOf(str(o.mode, 8), modeIds, "FM"),
+      shift: oneOf(str(o.shift, 10), ["simplex", "minus", "plus"], "simplex"),
+      offsetHz: num(o.offsetHz, 0, 99999990, 600000),
+      toneMode: oneOf(str(o.toneMode, 10), ["off", "encdec", "ctcss", "dcs"], "off"),
+      ctcss: num(o.ctcss, 60, 260, 88.5),
+      dcs: num(o.dcs, 0, 999, 23),
+      tag: str(o.tag, 40),
+      archived: !!o.archived
+    };
+  }
+  function qso(o) {
+    if (!o || typeof o !== "object") return null;
+    return {
+      id: str(o.id, 40) || crypto.randomUUID(),
+      utc: str(o.utc, 30) || new Date().toISOString(),
+      call: str(o.call, 20).toUpperCase(),
+      hz: num(o.hz, 0, 999999990, 0),
+      mode: oneOf(str(o.mode, 8), modeIds, "FM"),
+      sent: str(o.sent, 10), rcvd: str(o.rcvd, 10),
+      name: str(o.name, 40), qth: str(o.qth, 60), grid: str(o.grid, 10).toUpperCase(),
+      pwr: num(o.pwr, 0, 2000, 0),
+      note: str(o.note, 500),
+      archived: !!o.archived
+    };
+  }
+  return { channel, qso };
+})();
+
+/* =====================================================================
+   State held by the instrument
+   ===================================================================== */
+const App = {
+  channels: [],
+  qsos: [],
+  editingChannel: null,
+  sweeps: [],           // array of {t, startHz, stepHz, samples:[0..15]}
+  sweeping: false,
+  sweepLoop: false,
+  poller: null,
+  virtual: new VirtualRadio()
+};
+
+/* =====================================================================
+   Boot the option lists
+   ===================================================================== */
+function fillSelect(sel, items, valueOf, labelOf) {
+  clear(sel);
+  for (const it of items) sel.appendChild(el("option", { value: valueOf(it), text: labelOf(it) }));
+}
+function fillModeSelects() {
+  for (const id of ["modeSel", "cMode", "scMode"]) {
+    fillSelect($(id), CAT.MODES, m => m.id, m => m.label);
+  }
+  $("scMode").value = "FM";
+}
+function fillToneSelects() {
+  for (const id of ["toneSel", "cTone"]) {
+    fillSelect($(id), CAT.CTCSS, t => String(t), t => t.toFixed(1));
+    $(id).value = "88.5";
+  }
+  for (const id of ["dcsSel", "cDcs"]) {
+    fillSelect($(id), CAT.DCS, d => String(d), d => String(d).padStart(3, "0"));
+    $(id).value = "23";
+  }
+}
+
+/* =====================================================================
+   HELM rendering
+   ===================================================================== */
+function renderReadout() {
+  const hz = link.shadow.hz.v;
+  const s = CAT.formatMHz(hz);
+  const cut = s.lastIndexOf(".");
+  const r = $("readout");
+  clear(r);
+  r.appendChild(document.createTextNode(s.slice(0, cut)));
+  r.appendChild(el("span", { class: "lo", text: s.slice(cut) }));
+  const chip = $("provFreq");
+  chip.className = "prov " + link.shadow.hz.p;
+  chip.textContent = link.shadow.hz.p;
+}
+
+function bars(node, value, max) {
+  if (node.childElementCount !== max) {
+    clear(node);
+    for (let i = 0; i < max; i++) node.appendChild(el("i", {}));
+  }
+  const kids = node.children;
+  for (let i = 0; i < max; i++) kids[i].classList.toggle("on", value !== null && i < value);
+}
+
+function lamp(id, lit) { $(id).classList.toggle("lit", !!lit); }
+
+const SHADOW_ROWS = [
+  ["vfo", "VFO", v => v],
+  ["mode", "Mode", v => v],
+  ["split", "Split", v => (v ? "on" : "off")],
+  ["shift", "Shift", v => v],
+  ["offsetHz", "Shift offset", v => (v / 1e6).toFixed(3) + " MHz"],
+  ["toneMode", "Tone mode", v => v],
+  ["ctcss", "CTCSS", v => Number(v).toFixed(1) + " Hz"],
+  ["dcs", "DCS", v => String(v).padStart(3, "0")],
+  ["clar", "Clarifier", v => (v ? "on" : "off")],
+  ["clarHz", "Clarifier offset", v => v + " Hz"],
+  ["lock", "Dial lock", v => (v ? "on" : "off")]
+];
+
+function renderShadow() {
+  const g = $("shadowGrid");
+  clear(g);
+  for (const [field, label, fmt] of SHADOW_ROWS) {
+    const s = link.shadow[field];
+    g.appendChild(el("div", { class: "sunk", style: "padding:8px" }, [
+      el("div", { class: "legend", text: label }),
+      el("div", { class: "mono", style: "margin:3px 0 5px", text: fmt(s.v) }),
+      el("span", { class: "prov " + s.p, text: s.p })
+    ]));
+  }
+}
+
+function renderHelm() {
+  renderReadout();
+  renderShadow();
+  const sh = link.shadow;
+  bars($("sBars"), sh.smeter.v, 15);
+  bars($("pBars"), sh.po.v, 15);
+  $("sVal").textContent = sh.smeter.v === null ? "--" : CAT.sMeterLabel(sh.smeter.v);
+  $("pVal").textContent = sh.po.v === null ? "--" : sh.po.v + "/15";
+  lamp("lampTx", sh.ptt.v);
+  lamp("lampSql", sh.signal.v);
+  lamp("lampSplit", sh.split.v);
+  lamp("lampCt", sh.toneOk.v);
+  lamp("lampDisc", sh.centred.v);
+  lamp("lampSwr", sh.hiSwr.v);
+  document.body.classList.toggle("transmitting", !!sh.ptt.v);
+  $("btnPtt").classList.toggle("on", !!sh.ptt.v);
+  $("btnSplit").classList.toggle("on", !!sh.split.v);
+  $("btnClar").classList.toggle("on", !!sh.clar.v);
+  $("btnLock").classList.toggle("on", !!sh.lock.v);
+  lamp("lampLink", link.connected);
+  $("btnConnect").textContent = link.connected ? "Disconnect" : "Connect";
+}
+
+function renderTraffic() {
+  const out = $("trafOut");
+  clear(out);
+  for (const l of link.traffic.slice(-160)) {
+    out.appendChild(el("b", { text: l.t + "  " + l.dir + "  " }));
+    out.appendChild(document.createTextNode((l.bytes || "").padEnd(15) + "  " + l.note + "\n"));
+  }
+  out.scrollTop = out.scrollHeight;
+}
+
+/* =====================================================================
+   Connection
+   ===================================================================== */
+async function toggleConnect() {
+  if (link.connected) {
+    stopPolling();
+    await link.disconnect();
+    toast("Disconnected");
+    renderHelm();
+    return;
+  }
+  const kind = $("srcSel").value;
+  try {
+    if (kind === "virtual") {
+      applyVirtualOptions();
+      await link.connect(new VirtualTransport(App.virtual));
+      toast("Virtual FT-897D connected");
+    } else {
+      await link.connect(new SerialTransport(Number($("baudSel").value)));
+      toast("Serial port open at " + $("baudSel").value + " baud");
+    }
+    await link.readFreqMode().catch(() => {});
+    startPolling();
+  } catch (e) {
+    toast(e.message || String(e), true);
+  }
+  renderHelm();
+}
+
+function applyVirtualOptions() {
+  App.virtual.opts.delayMs = Number($("vDelay").value) || 0;
+  App.virtual.opts.dropPct = Number($("vDrop").value) || 0;
+  App.virtual.opts.corruptPct = Number($("vCorrupt").value) || 0;
+  App.virtual.opts.floor = Number($("vFloor").value) || 0;
+  App.virtual.opts.signals = $("vSignals").checked;
+}
+
+function startPolling() {
+  stopPolling();
+  if (!$("pollChk").checked) return;
+  App.poller = setInterval(async () => {
+    if (!link.connected || App.sweeping) return;
+    try {
+      if (link.shadow.ptt.v) await link.readTxStatus();
+      else { await link.readRxStatus(); await link.readTxStatus(); }
+    } catch (e) { /* a dropped poll is not worth shouting about */ }
+  }, 750);
+}
+function stopPolling() { if (App.poller) clearInterval(App.poller); App.poller = null; }
+
+/* =====================================================================
+   HELM actions
+   ===================================================================== */
+async function guarded(fn) {
+  if (!link.connected) { toast("Connect a radio first", true); return; }
+  try { await fn(); } catch (e) { toast(e.message || String(e), true); }
+}
+
+async function applyPanel() {
+  await guarded(async () => {
+    const hz = CAT.parseMHz($("freqIn").value);
+    if (hz !== null) await link.setFrequency(hz);
+    await link.setMode($("modeSel").value);
+    await link.setShift($("shiftSel").value);
+    const off = CAT.parseMHz($("offsetIn").value);
+    if (off !== null) await link.setOffset(off);
+    const tm = $("toneModeSel").value;
+    if (tm === "dcs") await link.setDcs(Number($("dcsSel").value));
+    else if (tm !== "off") await link.setCtcss(Number($("toneSel").value));
+    await link.setToneMode(tm);
+    const clar = Number($("clarIn").value) || 0;
+    await link.setClarOffset(clar);
+    toast("Panel sent to radio");
+  });
+}
+
+async function stepFreq(delta) {
+  await guarded(async () => {
+    const hz = clamp(link.shadow.hz.v + delta, 0, 999999990);
+    await link.setFrequency(hz);
+    $("freqIn").value = (hz / 1e6).toFixed(5);
+  });
+}
+
+async function pttDown() { if (!link.shadow.ptt.v) await guarded(() => link.setPtt(true)); }
+async function pttUp()   { if (link.shadow.ptt.v)  await guarded(() => link.setPtt(false)); }
+
+/* =====================================================================
+   BANDSCOPE - the signature instrument
+   Sweeps by retuning the radio and reading the S-meter at each stop.
+   ===================================================================== */
+const Scope = (() => {
+  const cv = () => $("scopeCanvas");
+  let geom = null;
+  const markers = { A: null, B: null };
+
+  function plan() {
+    const centre = CAT.parseMHz($("scCentre").value);
+    const spanHz = (Number($("scSpan").value) || 200) * 1000;
+    const stepHz = Math.max(10, Math.round((Number($("scStep").value) || 5) * 1000 / 10) * 10);
+    if (centre === null) return null;
+    const points = Math.floor(spanHz / stepHz) + 1;
+    const startHz = Math.max(0, centre - Math.floor(points / 2) * stepHz);
+    /* a verified settle time is a hard floor: dwelling under it measures nothing */
+    const floor = Constants.rec("settleMs") && Constants.rec("settleMs").verified ? Number(Constants.get("settleMs")) : 0;
+    const asked = Number($("scDwell").value) || 60;
+    return { centre, spanHz, stepHz, points, startHz, dwell: Math.max(asked, floor), askedDwell: asked, floor };
+  }
+
+  function estimate() {
+    const p = plan();
+    if (!p) { $("scEstimate").textContent = ""; return; }
+    const per = p.dwell + link.gapMs * 2 + 20;
+    const secs = Math.round(p.points * per / 1000);
+    let txt = p.points + " stops, about " + secs + " s a sweep";
+    if (p.floor && p.askedDwell < p.floor) txt += ", dwell raised to the measured " + p.floor + " ms settle time";
+    $("scEstimate").textContent = txt;
+  }
+
+  async function sweepOnce() {
+    const p = plan();
+    if (!p) { toast("Check the centre frequency", true); return; }
+    if (!link.connected) { toast("Connect a radio first", true); return; }
+    if (p.points > 4000) { toast("That is more than 4000 stops. Narrow the span or widen the step.", true); return; }
+
+    App.sweeping = true;
+    Field.holdScreen(true);
+    const restore = link.shadow.hz.v;
+    const samples = new Array(p.points).fill(0);
+    try {
+      await link.setMode($("scMode").value);
+      for (let i = 0; i < p.points; i++) {
+        if (!App.sweeping) break;
+        const hz = p.startHz + i * p.stepHz;
+        await link.setFrequency(hz);
+        await sleep(p.dwell);
+        samples[i] = await link.probeS();
+        if (i % 4 === 0 || i === p.points - 1) {
+          $("scStatus").textContent = "Sweeping " + (i + 1) + " of " + p.points;
+          draw({ t: Date.now(), startHz: p.startHz, stepHz: p.stepHz, samples: samples.slice(0, i + 1) }, p);
+        }
+      }
+      const rec = { t: Date.now(), startHz: p.startHz, stepHz: p.stepHz, samples };
+      App.sweeps.push(rec);
+      const keep = Number($("scKeep").value) || 24;
+      while (App.sweeps.length > keep) App.sweeps.shift();
+      draw(rec, p);
+      renderPeaks(rec);
+    } catch (e) {
+      toast(e.message || String(e), true);
+    } finally {
+      App.sweeping = false;
+      if (!App.sweepLoop) Field.holdScreen(false);
+      $("scStatus").textContent = "Idle";
+      try { await link.setFrequency(restore); } catch (e) {}
+    }
+  }
+
+  async function sweepLoop() {
+    if (App.sweepLoop) { App.sweepLoop = false; App.sweeping = false; $("btnSweep").textContent = "Start sweep"; return; }
+    App.sweepLoop = true;
+    $("btnSweep").textContent = "Stop sweep";
+    while (App.sweepLoop && link.connected) {
+      await sweepOnce();
+      if (!App.sweepLoop) break;
+      await sleep(120);
+    }
+    App.sweepLoop = false;
+    $("btnSweep").textContent = "Start sweep";
+  }
+
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+  function draw(live, p) {
+    const c = cv(), ctx = c.getContext("2d");
+    const W = c.width, H = c.height;
+    const traceH = Math.round(H * 0.55), fallH = H - traceH - 22;
+    const inkDim = css("--faint"), rule = css("--rule"), trace = css("--trace"), lamp = css("--lamp");
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = css("--sunk"); ctx.fillRect(0, 0, W, H);
+
+    const rec = live || App.sweeps[App.sweeps.length - 1];
+    const points = rec ? Math.max(rec.samples.length, (p ? p.points : rec.samples.length)) : 0;
+    const tmSel = $("scTrace");
+    const traceMode = tmSel ? tmSel.value : "live";
+    const disp = rec ? (traceMode === "live" ? rec.samples : traceSamples(traceMode, live)) : [];
+
+    /* graticule: S units up the side, real frequencies along the bottom */
+    ctx.strokeStyle = rule; ctx.lineWidth = 1;
+    ctx.font = "10px ui-monospace, monospace"; ctx.fillStyle = inkDim;
+    for (let s = 0; s <= 15; s += 3) {
+      const y = traceH - (s / 15) * (traceH - 14) - 2;
+      ctx.beginPath(); ctx.moveTo(30, y + 0.5); ctx.lineTo(W - 4, y + 0.5); ctx.stroke();
+      ctx.fillText(CAT.sMeterLabel(s), 2, y + 3);
+    }
+
+    if (!rec || !points) {
+      ctx.fillStyle = inkDim; ctx.font = "12px system-ui";
+      ctx.fillText("No sweep yet. Set a centre and span, then start a sweep.", 40, traceH / 2);
+      $("scLeft").textContent = "--"; $("scRight").textContent = "--";
+      return;
+    }
+
+    const x = (i) => 30 + (i / Math.max(1, points - 1)) * (W - 36);
+    const y = (s) => traceH - (clamp(s, 0, 15) / 15) * (traceH - 14) - 2;
+
+    /* The S-meter has 16 levels and nothing between them, so the trace is
+       drawn as an honest staircase with a visible dot at every stop. */
+    ctx.strokeStyle = trace; ctx.lineWidth = 1.5; ctx.beginPath();
+    const last = disp.length - 1;
+    for (let i = 0; i <= last; i++) {
+      const yi = y(disp[i]);
+      const x0 = x(i);
+      const x1 = x(Math.min(i + 1, points - 1));
+      if (i === 0) ctx.moveTo(x0, yi); else ctx.lineTo(x0, yi);
+      ctx.lineTo(x1, yi);
+    }
+    ctx.stroke();
+    ctx.fillStyle = trace;
+    const dotEvery = Math.max(1, Math.floor(points / 220));
+    for (let i = 0; i < disp.length; i += dotEvery) {
+      ctx.fillRect(x(i) - 1, y(disp[i]) - 1, 2, 2);
+    }
+    if (traceMode !== "live") {
+      ctx.fillStyle = inkDim; ctx.font = "10px ui-monospace, monospace";
+      ctx.fillText((traceMode === "hold" ? "peak hold" : "average") + " over " + App.sweeps.length + " sweeps", 34, 12);
+    }
+
+    /* sweep cursor */
+    if (live && rec.samples.length < points) {
+      const cx = x(rec.samples.length - 1);
+      ctx.strokeStyle = lamp; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, traceH); ctx.stroke();
+    }
+
+    /* waterfall of the kept sweeps, newest at the top */
+    const rows = App.sweeps.slice(-Math.max(1, Math.floor(fallH / 3)));
+    const rh = Math.max(2, Math.floor(fallH / Math.max(1, rows.length)));
+    for (let r = 0; r < rows.length; r++) {
+      const row = rows[rows.length - 1 - r];
+      const yTop = traceH + 8 + r * rh;
+      for (let i = 0; i < row.samples.length; i++) {
+        const v = row.samples[i] / 15;
+        if (v <= 0) continue;
+        ctx.fillStyle = "rgba(121,230,166," + (0.12 + v * 0.8).toFixed(3) + ")";
+        const x0 = x(i), x1 = x(Math.min(i + 1, row.samples.length - 1));
+        ctx.fillRect(x0, yTop, Math.max(1, x1 - x0), rh - 1);
+      }
+    }
+
+    /* markers, and the delta between them, which is the whole point of a pair */
+    geom = { startHz: rec.startHz, stepHz: rec.stepHz, points, traceH,
+      x0: 30, x1: W - 6, samples: disp };
+    for (const which of ["A", "B"]) {
+      const m = markers[which];
+      if (m === null || m === undefined) continue;
+      const i = clamp(Math.round((m - rec.startHz) / rec.stepHz), 0, points - 1);
+      const mx = x(i);
+      ctx.strokeStyle = lamp; ctx.lineWidth = 1;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(mx, 0); ctx.lineTo(mx, traceH); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = lamp; ctx.font = "10px ui-monospace, monospace";
+      ctx.fillText(which, mx + 3, 11);
+    }
+    renderMarkerReadout();
+
+    const endHz = rec.startHz + (points - 1) * rec.stepHz;
+    $("scLeft").textContent = CAT.formatMHz(rec.startHz);
+    $("scRight").textContent = CAT.formatMHz(endHz);
+  }
+
+  /* ---- markers ---- */
+  function sampleAt(hz) {
+    if (!geom) return null;
+    const i = clamp(Math.round((hz - geom.startHz) / geom.stepHz), 0, geom.points - 1);
+    const v = geom.samples[i];
+    return v === undefined ? null : v;
+  }
+  function renderMarkerReadout() {
+    const out = $("markRead");
+    if (!out) return;
+    const parts = [];
+    for (const which of ["A", "B"]) {
+      const m = markers[which];
+      if (m === null || m === undefined) continue;
+      const v = sampleAt(m);
+      parts.push(which + " " + CAT.formatMHz(m) + (v === null ? "" : "  " + CAT.sMeterLabel(Math.round(v))));
+    }
+    if (markers.A !== null && markers.B !== null) {
+      const d = Math.abs(markers.B - markers.A);
+      parts.push("delta " + (d >= 1e6 ? (d / 1e6).toFixed(4) + " MHz" : (d / 1000).toFixed(2) + " kHz"));
+    }
+    out.textContent = parts.length ? parts.join("   ") : "Click the trace to place a marker";
+  }
+  function hzAtClientX(clientX) {
+    if (!geom) return null;
+    const c = cv(), r = c.getBoundingClientRect();
+    const scale = c.width / r.width;
+    const px = (clientX - r.left) * scale;
+    const frac = (px - geom.x0) / Math.max(1, geom.x1 - geom.x0);
+    const i = clamp(Math.round(frac * (geom.points - 1)), 0, geom.points - 1);
+    return geom.startHz + i * geom.stepHz;
+  }
+  function setMarker(which, hz) {
+    if (hz === null || hz === undefined) { toast("Run a sweep before placing markers", true); return; }
+    markers[which] = hz;
+    draw(null, null);
+  }
+  function clearMarkers() { markers.A = null; markers.B = null; draw(null, null); }
+
+  function renderPeaks(rec) {
+    const body = $("peakBody");
+    clear(body);
+    const found = [];
+    for (let i = 1; i < rec.samples.length - 1; i++) {
+      const s = rec.samples[i];
+      if (s >= 3 && s >= rec.samples[i - 1] && s > rec.samples[i + 1]) {
+        found.push({ hz: rec.startHz + i * rec.stepHz, s });
+      }
+    }
+    found.sort((a, b) => b.s - a.s);
+    if (!found.length) {
+      body.appendChild(el("tr", {}, [el("td", { colspan: "3", class: "tiny", text: "Nothing above the noise in that sweep." })]));
+      return;
+    }
+    for (const f of found.slice(0, 40)) {
+      body.appendChild(el("tr", {}, [
+        el("td", { class: "num", text: CAT.formatMHz(f.hz) }),
+        el("td", { class: "num", text: CAT.sMeterLabel(f.s) }),
+        el("td", {}, [
+          el("button", { class: "slim", type: "button", text: "Tune", onclick: () => guarded(async () => {
+            await link.setFrequency(f.hz); toast("Tuned to " + CAT.formatMHz(f.hz)); }) }),
+          el("button", { class: "slim", type: "button", text: "To locker", onclick: () => {
+            Locker.add({ name: CAT.formatMHz(f.hz), hz: f.hz, mode: $("scMode").value, tag: "found" });
+            toast("Added to the locker"); } })
+        ])
+      ]));
+    }
+  }
+
+  function csv() {
+    const rec = App.sweeps[App.sweeps.length - 1];
+    if (!rec) return null;
+    const lines = ["frequency_hz,s_meter_raw,s_meter_label"];
+    for (let i = 0; i < rec.samples.length; i++) {
+      const hz = rec.startHz + i * rec.stepHz;
+      lines.push(hz + "," + rec.samples[i] + "," + CAT.sMeterLabel(rec.samples[i]));
+    }
+    return lines.join("\n");
+  }
+
+  return { sweepOnce, sweepLoop, draw, estimate, renderPeaks, csv,
+    setMarker, clearMarkers, hzAtClientX, renderMarkerReadout, sampleAt,
+    get markers() { return markers; }, get geom() { return geom; } };
+})();
+
+/* =====================================================================
+   LOCKER - a local channel bank. The FT-897D CAT set cannot read or
+   write radio memories, so recall means "push these settings to the VFO".
+   ===================================================================== */
+const Locker = (() => {
+  function load() { App.channels = (Store.get("channels", []) || []).map(Schema.channel).filter(Boolean); }
+  function save() { Store.set("channels", App.channels); render(); }
+
+  function add(partial) {
+    const c = Schema.channel(Object.assign({ id: crypto.randomUUID(), name: "", hz: 145000000, mode: "FM" }, partial));
+    if (!c) return null;
+    App.channels.push(c); save(); return c;
+  }
+  function byId(id) { return App.channels.find(c => c.id === id) || null; }
+
+  function toneText(c) {
+    if (c.toneMode === "off") return "off";
+    if (c.toneMode === "dcs") return "D" + String(c.dcs).padStart(3, "0");
+    return Number(c.ctcss).toFixed(1);
+  }
+
+  function visible() {
+    const q = ($("chanFind").value || "").trim().toLowerCase();
+    const showArchived = $("chanArchived").checked;
+    return App.channels.filter(c => {
+      if (c.archived && !showArchived) return false;
+      if (!q) return true;
+      return (c.name + " " + CAT.formatMHz(c.hz) + " " + c.tag + " " + c.mode).toLowerCase().includes(q);
+    }).sort((a, b) => a.hz - b.hz);
+  }
+
+  function render() {
+    const body = $("chanBody");
+    clear(body);
+    const list = visible();
+    for (const c of list) {
+      const tr = el("tr", {}, [
+        el("td", { text: c.name || "(unnamed)" }),
+        el("td", { class: "num", text: CAT.formatMHz(c.hz) }),
+        el("td", { text: c.mode }),
+        el("td", { text: c.shift }),
+        el("td", { text: toneText(c) }),
+        el("td", { text: c.tag }),
+        el("td", {}, [
+          el("button", { class: "slim", type: "button", text: "Recall", onclick: () => recall(c.id) }),
+          el("button", { class: "slim", type: "button", text: "Edit", onclick: () => edit(c.id) }),
+          el("button", { class: "slim", type: "button", text: c.archived ? "Restore" : "Archive",
+            onclick: () => { c.archived = !c.archived; save(); } })
+        ])
+      ]);
+      body.appendChild(tr);
+    }
+    if (!list.length) {
+      body.appendChild(el("tr", {}, [el("td", { colspan: "7", class: "tiny",
+        text: "No channels yet. Capture the current VFO, or add one by hand." })]));
+    }
+    $("chanCount").textContent = list.length + " of " + App.channels.length + " channels shown";
+  }
+
+  async function recall(id) {
+    const c = byId(id);
+    if (!c) return;
+    await guarded(async () => {
+      await link.setFrequency(c.hz);
+      await link.setMode(c.mode);
+      await link.setShift(c.shift);
+      await link.setOffset(c.offsetHz);
+      if (c.toneMode === "dcs") await link.setDcs(c.dcs);
+      else if (c.toneMode !== "off") await link.setCtcss(c.ctcss);
+      await link.setToneMode(c.toneMode);
+      syncPanelFromShadow();
+      toast("Recalled " + (c.name || CAT.formatMHz(c.hz)));
+    });
+  }
+
+  function edit(id) {
+    const c = id ? byId(id) : Schema.channel({ hz: link.shadow.hz.v, mode: link.shadow.mode.v });
+    App.editingChannel = id ? id : null;
+    $("chanDlgTitle").textContent = id ? "Edit channel" : "New channel";
+    $("cName").value = c.name; $("cFreq").value = (c.hz / 1e6).toFixed(5);
+    $("cMode").value = c.mode; $("cShift").value = c.shift;
+    $("cOffset").value = (c.offsetHz / 1e6).toFixed(3);
+    $("cToneMode").value = c.toneMode; $("cTone").value = String(c.ctcss); $("cDcs").value = String(c.dcs);
+    $("cTag").value = c.tag;
+    $("chanDlg").showModal();
+  }
+
+  function saveDialog() {
+    const hz = CAT.parseMHz($("cFreq").value);
+    if (hz === null) { toast("That frequency does not parse", true); return; }
+    const rec = Schema.channel({
+      id: App.editingChannel || crypto.randomUUID(),
+      name: $("cName").value, hz,
+      mode: $("cMode").value, shift: $("cShift").value,
+      offsetHz: CAT.parseMHz($("cOffset").value) || 0,
+      toneMode: $("cToneMode").value,
+      ctcss: Number($("cTone").value), dcs: Number($("cDcs").value),
+      tag: $("cTag").value
+    });
+    const i = App.channels.findIndex(c => c.id === rec.id);
+    if (i >= 0) { rec.archived = App.channels[i].archived; App.channels[i] = rec; }
+    else App.channels.push(rec);
+    save();
+    $("chanDlg").close();
+    toast("Channel saved");
+  }
+
+  function toCsv() {
+    const head = "name,frequency_mhz,mode,shift,offset_mhz,tone_mode,ctcss_hz,dcs_code,tag,archived";
+    const q = (s) => '"' + String(s).replace(/"/g, '""') + '"';
+    const rows = App.channels.map(c => [q(c.name), (c.hz / 1e6).toFixed(5), c.mode, c.shift,
+      (c.offsetHz / 1e6).toFixed(3), c.toneMode, Number(c.ctcss).toFixed(1), c.dcs, q(c.tag), c.archived].join(","));
+    return [head].concat(rows).join("\n");
+  }
+
+  function parseCsvLine(line) {
+    const out = []; let cur = ""; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQ) {
+        if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+        else if (ch === '"') inQ = false;
+        else cur += ch;
+      } else if (ch === '"') inQ = true;
+      else if (ch === ",") { out.push(cur); cur = ""; }
+      else cur += ch;
+    }
+    out.push(cur);
+    return out;
+  }
+
+  function fromCsv(text) {
+    const lines = String(text).split(/\r?\n/).filter(l => l.trim().length);
+    if (!lines.length) return 0;
+    const head = parseCsvLine(lines[0]).map(h => h.trim().toLowerCase());
+    const col = (n) => head.indexOf(n);
+    let added = 0;
+    for (let i = 1; i < lines.length; i++) {
+      const f = parseCsvLine(lines[i]);
+      const hz = CAT.parseMHz(f[col("frequency_mhz")] || f[1]);
+      if (hz === null) continue;
+      const rec = Schema.channel({
+        id: crypto.randomUUID(),
+        name: f[col("name")] || "",
+        hz,
+        mode: (f[col("mode")] || "FM").toUpperCase(),
+        shift: (f[col("shift")] || "simplex").toLowerCase(),
+        offsetHz: CAT.parseMHz(f[col("offset_mhz")] || "0.6") || 600000,
+        toneMode: (f[col("tone_mode")] || "off").toLowerCase(),
+        ctcss: Number(f[col("ctcss_hz")]) || 88.5,
+        dcs: Number(f[col("dcs_code")]) || 23,
+        tag: f[col("tag")] || ""
+      });
+      if (rec) { App.channels.push(rec); added++; }
+    }
+    save();
+    return added;
+  }
+
+  return { load, save, add, render, recall, edit, saveDialog, toCsv, fromCsv, visible, toneText };
+})();
+
+/* =====================================================================
+   LOG - contacts, ADIF out
+   ===================================================================== */
+const Log = (() => {
+  function load() { App.qsos = (Store.get("qsos", []) || []).map(Schema.qso).filter(Boolean); }
+  function save() { Store.set("qsos", App.qsos); render(); }
+
+  function myGrid() { return ($("myGrid") && $("myGrid").value || "").trim().toUpperCase(); }
+
+  /* live duplicate check as the callsign is typed */
+  function checkDupe() {
+    const out = $("qDup");
+    if (!out) return;
+    const call = ($("qCall").value || "").trim().toUpperCase();
+    if (!call) { out.textContent = ""; out.style.color = ""; return; }
+    const priors = Dupes.priors(call, link.shadow.hz.v, link.shadow.mode.v);
+    if (!priors.length) {
+      out.textContent = "New on " + (Bands.adif(link.shadow.hz.v) || "this frequency");
+      out.style.color = "var(--trace)";
+      return;
+    }
+    const last = priors.sort((a, b) => (a.utc < b.utc ? 1 : -1))[0];
+    out.textContent = "Worked before, " + priors.length + " time" + (priors.length > 1 ? "s" : "") +
+      " on this band and mode, last on " + last.utc.slice(0, 10);
+    out.style.color = "var(--warn)";
+  }
+
+  function addFromPanel() {
+    const call = ($("qCall").value || "").trim().toUpperCase();
+    if (!call) { toast("A contact needs a callsign", true); return; }
+    const priors = Dupes.priors(call, link.shadow.hz.v, link.shadow.mode.v);
+    const rec = Schema.qso({
+      id: crypto.randomUUID(),
+      utc: new Date().toISOString(),
+      call,
+      hz: link.shadow.hz.v,
+      mode: link.shadow.mode.v,
+      sent: $("qSent").value, rcvd: $("qRcvd").value,
+      name: $("qName").value, qth: $("qQth").value, grid: $("qGrid").value,
+      pwr: Number($("qPwr").value) || 0,
+      note: $("qNote").value
+    });
+    App.qsos.push(rec);
+    save();
+    $("qCall").value = ""; $("qName").value = ""; $("qQth").value = ""; $("qGrid").value = ""; $("qNote").value = "";
+    checkDupe();
+    const km = myGrid() && rec.grid ? Grid.distanceKm(myGrid(), rec.grid) : null;
+    toast("Logged " + call + " on " + CAT.formatMHz(rec.hz) +
+      (priors.length ? ", a repeat on this band" : "") + (km !== null ? ", " + km + " km" : ""));
+  }
+
+  function visible() {
+    const q = ($("qFind").value || "").trim().toLowerCase();
+    return App.qsos.filter(r => !r.archived && (!q ||
+      (r.call + " " + r.name + " " + r.qth + " " + r.grid + " " + r.note).toLowerCase().includes(q)))
+      .sort((a, b) => (a.utc < b.utc ? 1 : -1));
+  }
+
+  function render() {
+    const body = $("qsoBody");
+    clear(body);
+    const list = visible();
+    for (const r of list) {
+      const km = myGrid() && r.grid ? Grid.distanceKm(myGrid(), r.grid) : null;
+      const brg = km !== null ? Grid.bearing(myGrid(), r.grid) : null;
+      body.appendChild(el("tr", {}, [
+        el("td", { class: "num", text: r.utc.slice(0, 16).replace("T", " ") }),
+        el("td", { text: r.call }),
+        el("td", { class: "num", text: CAT.formatMHz(r.hz) }),
+        el("td", { text: Bands.adif(r.hz) || "?" }),
+        el("td", { text: r.mode }),
+        el("td", { text: r.sent }),
+        el("td", { text: r.rcvd }),
+        el("td", { text: r.grid }),
+        el("td", { class: "num", text: km === null ? "" : km + " km at " + brg + " deg" }),
+        el("td", { text: r.note.slice(0, 60) }),
+        el("td", {}, [
+          el("button", { class: "slim", type: "button", text: "Tune", onclick: () => guarded(async () => {
+            await link.setFrequency(r.hz); await link.setMode(r.mode); syncPanelFromShadow(); }) }),
+          el("button", { class: "slim", type: "button", text: "Archive", onclick: () => { r.archived = true; save(); } })
+        ])
+      ]));
+    }
+    if (!list.length) body.appendChild(el("tr", {}, [el("td", { colspan: "11", class: "tiny",
+      text: "No contacts logged yet." })]));
+    const bands = new Set(list.map(r => Bands.adif(r.hz)).filter(Boolean));
+    const calls = new Set(list.map(r => r.call));
+    $("qsoCount").textContent = list.length + " contacts, " + calls.size + " unique callsigns, " +
+      bands.size + " bands";
+  }
+
+  const ADIF_MODE = { LSB: "SSB", USB: "SSB", CW: "CW", CWR: "CW", AM: "AM", FM: "FM", WFM: "FM", DIG: "DATA", PKT: "PKT" };
+  function adifField(name, value) {
+    const v = String(value === null || value === undefined ? "" : value);
+    return "<" + name + ":" + v.length + ">" + v + " ";
+  }
+  function toAdif() {
+    const out = ["Halyard v" + VERSION + " ADIF export", "<ADIF_VER:5>3.1.4", "<PROGRAMID:7>Halyard", "<EOH>", ""];
+    for (const r of App.qsos) {
+      if (r.archived) continue;
+      const d = new Date(r.utc);
+      const date = d.getUTCFullYear() + String(d.getUTCMonth() + 1).padStart(2, "0") + String(d.getUTCDate()).padStart(2, "0");
+      const time = String(d.getUTCHours()).padStart(2, "0") + String(d.getUTCMinutes()).padStart(2, "0") +
+                   String(d.getUTCSeconds()).padStart(2, "0");
+      let line = "";
+      line += adifField("CALL", r.call);
+      line += adifField("QSO_DATE", date);
+      line += adifField("TIME_ON", time);
+      line += adifField("FREQ", (r.hz / 1e6).toFixed(5));
+      line += adifField("MODE", ADIF_MODE[r.mode] || "FM");
+      const bandLabel = Bands.adif(r.hz);
+      if (bandLabel) line += adifField("BAND", bandLabel);
+      if (r.sent) line += adifField("RST_SENT", r.sent);
+      if (r.rcvd) line += adifField("RST_RCVD", r.rcvd);
+      if (r.name) line += adifField("NAME", r.name);
+      if (r.qth) line += adifField("QTH", r.qth);
+      if (r.grid) line += adifField("GRIDSQUARE", r.grid);
+      if (r.pwr) line += adifField("TX_PWR", r.pwr);
+      if (r.note) line += adifField("COMMENT", r.note);
+      line += adifField("RIG", "Yaesu FT-897D");
+      out.push(line + "<EOR>");
+    }
+    return out.join("\n");
+  }
+  function toCsv() {
+    const q = (s) => '"' + String(s).replace(/"/g, '""') + '"';
+    const head = "utc,call,frequency_mhz,mode,rst_sent,rst_rcvd,name,qth,grid,power_w,notes";
+    const rows = App.qsos.filter(r => !r.archived).map(r => [r.utc, q(r.call), (r.hz / 1e6).toFixed(5), r.mode,
+      q(r.sent), q(r.rcvd), q(r.name), q(r.qth), q(r.grid), r.pwr, q(r.note)].join(","));
+    return [head].concat(rows).join("\n");
+  }
+  function importAdif(text) {
+    const recs = parseAdif(text);
+    let added = 0, skipped = 0;
+    for (const r of recs) {
+      const clash = App.qsos.some(x => x.call === r.call && x.utc.slice(0, 16) === r.utc.slice(0, 16));
+      if (clash) { skipped++; continue; }
+      App.qsos.push(r); added++;
+    }
+    save();
+    return { added, skipped, total: recs.length };
+  }
+  return { load, save, addFromPanel, render, toAdif, toCsv, importAdif, checkDupe, myGrid };
+})();
+
+/* =====================================================================
+   Panel sync
+   ===================================================================== */
+function syncPanelFromShadow() {
+  const s = link.shadow;
+  $("freqIn").value = (s.hz.v / 1e6).toFixed(5);
+  $("modeSel").value = s.mode.v;
+  $("shiftSel").value = s.shift.v;
+  $("offsetIn").value = (s.offsetHz.v / 1e6).toFixed(3);
+  $("toneModeSel").value = s.toneMode.v;
+  $("toneSel").value = String(s.ctcss.v);
+  $("dcsSel").value = String(s.dcs.v);
+  $("clarIn").value = s.clarHz.v;
+}
+
+/* =====================================================================
+   Self test
+   ===================================================================== */
+const SelfTest = (() => {
+  const results = [];
+  let pass = 0, fail = 0;
+  function ok(name, cond, detail) {
+    results.push({ name, cond: !!cond, detail: detail || "" });
+    if (cond) pass++; else fail++;
+  }
+  function eq(name, got, want) {
+    const g = Array.isArray(got) || got instanceof Uint8Array ? hexs(got) : String(got);
+    const w = Array.isArray(want) || want instanceof Uint8Array ? hexs(want) : String(want);
+    ok(name, g === w, g === w ? "" : "got " + g + ", wanted " + w);
+  }
+  function throws(name, fn) {
+    let threw = false;
+    try { fn(); } catch (e) { threw = true; }
+    ok(name, threw, threw ? "" : "did not throw");
+  }
+
+  async function run() {
+    results.length = 0; pass = 0; fail = 0;
+
+    /* --- BCD --- */
+    eq("BCD encodes 1425000 into four bytes", CAT.bcdEncode(1425000, 4), [0x01, 0x42, 0x50, 0x00]);
+    eq("BCD encodes 885 into two bytes", CAT.bcdEncode(885, 2), [0x08, 0x85]);
+    eq("BCD decodes back to 1425000", CAT.bcdDecode([0x01, 0x42, 0x50, 0x00]), 1425000);
+    throws("BCD rejects a value that will not fit", () => CAT.bcdEncode(123456789, 4));
+    throws("BCD decode rejects a non BCD nibble", () => CAT.bcdDecode([0x1A]));
+
+    /* --- frequency --- */
+    eq("14.250 MHz encodes correctly", CAT.setFrequency(14250000), [0x01, 0x42, 0x50, 0x00, 0x01]);
+    eq("145.500 MHz encodes correctly", CAT.setFrequency(145500000), [0x14, 0x55, 0x00, 0x00, 0x01]);
+    eq("7.074 MHz encodes correctly", CAT.setFrequency(7074000), [0x00, 0x70, 0x74, 0x00, 0x01]);
+    ok("frequency rounds to the 10 Hz radio resolution",
+      hexs(CAT.setFrequency(14250004)) === hexs(CAT.setFrequency(14250000)));
+    throws("frequency above the BCD range is rejected", () => CAT.setFrequency(1200000000));
+    eq("frequency round trips through the decoder",
+      CAT.decodeFreqMode(Uint8Array.from([0x01, 0x42, 0x50, 0x00, 0x01])).hz, 14250000);
+
+    /* --- parsing and formatting --- */
+    eq("plain decimal MHz parses", CAT.parseMHz("145.500"), 145500000);
+    eq("Yaesu style dotted text parses", CAT.parseMHz("14.250.00"), 14250000);
+    eq("comma decimal parses", CAT.parseMHz("14,250"), 14250000);
+    eq("nonsense does not parse", CAT.parseMHz("banana"), "null");
+    eq("formatter groups the digits", CAT.formatMHz(14250000), "14.250.00");
+    eq("formatter keeps three digit MHz", CAT.formatMHz(145500000), "145.500.00");
+
+    /* --- modes --- */
+    eq("USB encodes", CAT.setMode("USB"), [0x01, 0, 0, 0, 0x07]);
+    eq("FM encodes", CAT.setMode("FM"), [0x08, 0, 0, 0, 0x07]);
+    throws("an unknown mode is rejected", () => CAT.setMode("XYZ"));
+    eq("mode code 0x08 decodes to FM", CAT.modeByCode(0x08).id, "FM");
+    ok("every mode in the table has a unique code",
+      new Set(CAT.MODES.map(m => m.code)).size === CAT.MODES.length);
+
+    /* --- repeater and tone --- */
+    eq("minus shift encodes", CAT.setRepeaterShift("minus"), [0x49, 0, 0, 0, 0x09]);
+    eq("600 kHz offset encodes", CAT.setRepeaterOffset(600000), [0x00, 0x06, 0x00, 0x00, 0xF9]);
+    eq("5 MHz offset encodes", CAT.setRepeaterOffset(5000000), [0x00, 0x50, 0x00, 0x00, 0xF9]);
+    eq("tone off encodes", CAT.setToneMode("off"), [0x8A, 0, 0, 0, 0x0A]);
+    eq("CTCSS mode encodes", CAT.setToneMode("ctcss"), [0x4A, 0, 0, 0, 0x0A]);
+    eq("88.5 Hz tone encodes on both halves", CAT.setCtcss(88.5), [0x08, 0x85, 0x08, 0x85, 0x0B]);
+    eq("split tone encodes each half", CAT.setCtcss(88.5, 100.0), [0x08, 0x85, 0x10, 0x00, 0x0B]);
+    eq("DCS 023 encodes", CAT.setDcs(23), [0x00, 0x23, 0x00, 0x23, 0x0C]);
+    ok("the CTCSS table has the standard 50 tones", CAT.CTCSS.length === 50, "got " + CAT.CTCSS.length);
+    ok("the DCS table has 104 codes", CAT.DCS.length === 104, "got " + CAT.DCS.length);
+
+    /* --- clarifier --- */
+    eq("positive clarifier carries a zero sign byte", CAT.setClarifierOffset(1200)[0], 0x00);
+    eq("negative clarifier carries an FF sign byte", CAT.setClarifierOffset(-1200)[0], 0xFF);
+    eq("clarifier magnitude encodes in 10 Hz units", CAT.setClarifierOffset(-1230).slice(2, 4), [0x01, 0x23]);
+
+    /* --- status bytes --- */
+    const rx = CAT.decodeRxStatus(0x07);
+    eq("S-meter comes out of the low nibble", rx.smeter, 7);
+    ok("a clear bit 7 reads as a signal present", rx.signal);
+    ok("a set bit 7 reads as squelched", CAT.decodeRxStatus(0x87).signal === false);
+    ok("the signal bit can be inverted from the bench", CAT.decodeRxStatus(0x87, { sql: true }).signal === true);
+    const tx = CAT.decodeTxStatus(0x0B);
+    eq("power out comes out of the low nibble", tx.po, 11);
+    ok("a clear bit 7 reads as transmitting", tx.ptt);
+    ok("a set bit 7 reads as receiving", CAT.decodeTxStatus(0x8B).ptt === false);
+    ok("a set bit 6 reads as high SWR", CAT.decodeTxStatus(0x40).hiSwr);
+    eq("S0 labels correctly", CAT.sMeterLabel(0), "S0");
+    eq("S9 labels correctly", CAT.sMeterLabel(9), "S9");
+    eq("above S9 labels in decibels", CAT.sMeterLabel(15), "S9+60");
+
+    /* --- schema validation of imported data --- */
+    ok("a channel with no frequency is rejected", Schema.channel({ name: "x" }) === null);
+    ok("an unknown mode falls back to FM", Schema.channel({ hz: 145e6, mode: "EVIL" }).mode === "FM");
+    ok("a script tag in a channel name stays inert text",
+      Schema.channel({ hz: 145e6, name: "<img src=x onerror=alert(1)>" }).name.indexOf("<img") === 0);
+    ok("channel names are length capped", Schema.channel({ hz: 145e6, name: "a".repeat(500) }).name.length <= 120);
+    ok("a QSO gets a UTC stamp even when none is supplied", !!Schema.qso({ call: "w1aw" }).utc);
+    ok("callsigns are upper cased on import", Schema.qso({ call: "w1aw" }).call === "W1AW");
+
+    /* --- ADIF --- */
+    const savedQsos = App.qsos;
+    App.qsos = [Schema.qso({ call: "W1AW", hz: 14250000, mode: "USB", utc: "2026-07-18T13:45:00.000Z",
+      sent: "59", rcvd: "57", note: "test" })];
+    const adif = Log.toAdif();
+    ok("ADIF carries the callsign with its length prefix", adif.indexOf("<CALL:4>W1AW") >= 0);
+    ok("ADIF writes the UTC date", adif.indexOf("<QSO_DATE:8>20260718") >= 0);
+    ok("ADIF writes the UTC time", adif.indexOf("<TIME_ON:6>134500") >= 0);
+    ok("ADIF maps USB onto SSB", adif.indexOf("<MODE:3>SSB") >= 0);
+    ok("ADIF writes megahertz", adif.indexOf("<FREQ:8>14.25000") >= 0);
+    ok("ADIF closes each record", adif.trim().endsWith("<EOR>"));
+    App.qsos = savedQsos;
+
+    /* --- locker CSV round trip --- */
+    const savedChannels = App.channels;
+    App.channels = [Schema.channel({ hz: 146940000, name: "Test, with comma", mode: "FM",
+      shift: "minus", offsetHz: 600000, toneMode: "ctcss", ctcss: 100.0, tag: "repeater" })];
+    const csv = Locker.toCsv();
+    ok("CSV quotes a name containing a comma", csv.indexOf('"Test, with comma"') >= 0);
+    App.channels = [];
+    const added = Locker.fromCsv(csv);
+    eq("CSV import returns one channel", added, 1);
+    eq("the frequency survives the CSV round trip", App.channels[0].hz, 146940000);
+    eq("the name survives the CSV round trip", App.channels[0].name, "Test, with comma");
+    eq("the tone survives the CSV round trip", App.channels[0].ctcss, 100);
+    App.channels = savedChannels;
+    Store.set("channels", App.channels);
+
+    /* --- virtual radio protocol round trips --- */
+    const vr = new VirtualRadio({ delayMs: 0, signals: true, floor: 1 });
+    const vt = new VirtualTransport(vr);
+    await vt.connect();
+    await vt.exchange(CAT.setFrequency(145030000), 0, 200);
+    const fm = CAT.decodeFreqMode(await vt.exchange(CAT.simple(CAT.OP.READ_FREQ_MODE), 5, 200));
+    eq("the virtual radio reports back the frequency it was given", fm.hz, 145030000);
+    await vt.exchange(CAT.setMode("USB"), 0, 200);
+    const fm2 = CAT.decodeFreqMode(await vt.exchange(CAT.simple(CAT.OP.READ_FREQ_MODE), 5, 200));
+    eq("the virtual radio reports back the mode it was given", fm2.mode, "USB");
+    const rxb = await vt.exchange(CAT.simple(CAT.OP.READ_RX), 1, 200);
+    ok("a planted signal reads well above the noise floor", CAT.decodeRxStatus(rxb[0]).smeter >= 8,
+      "got S" + CAT.decodeRxStatus(rxb[0]).smeter);
+    await vt.exchange(CAT.setFrequency(145900000), 0, 200);
+    const rxq = await vt.exchange(CAT.simple(CAT.OP.READ_RX), 1, 200);
+    ok("an empty channel reads at the noise floor", CAT.decodeRxStatus(rxq[0]).smeter <= 1);
+    await vt.exchange(CAT.simple(CAT.OP.PTT_ON), 0, 200);
+    const txb = await vt.exchange(CAT.simple(CAT.OP.READ_TX), 1, 200);
+    ok("the virtual radio reports transmitting after PTT on", CAT.decodeTxStatus(txb[0]).ptt);
+    await vt.exchange(CAT.simple(CAT.OP.PTT_OFF), 0, 200);
+    const txb2 = await vt.exchange(CAT.simple(CAT.OP.READ_TX), 1, 200);
+    ok("the virtual radio reports receiving after PTT off", CAT.decodeTxStatus(txb2[0]).ptt === false);
+    await vt.exchange(CAT.simple(CAT.OP.VFO_TOGGLE), 0, 200);
+    eq("the VFO toggle flips the virtual radio", vr.state.vfo, "B");
+    ok("every block the virtual radio received was exactly five bytes",
+      vr.written.every(b => b.length === 5));
+
+    /* --- fault injection --- */
+    const vrDrop = new VirtualRadio({ delayMs: 0, dropPct: 100 });
+    const vtDrop = new VirtualTransport(vrDrop);
+    await vtDrop.connect();
+    let dropped = false;
+    try { await vtDrop.exchange(CAT.simple(CAT.OP.READ_RX), 1, 60); } catch (e) { dropped = true; }
+    ok("a fully dropped reply surfaces as an error rather than bad data", dropped);
+
+    /* --- link queue keeps commands in order --- */
+    const l2 = new Link();
+    const vr2 = new VirtualRadio({ delayMs: 1 });
+    await l2.connect(new VirtualTransport(vr2));
+    l2.gapMs = 0;
+    await Promise.all([l2.setFrequency(7100000), l2.setFrequency(7200000), l2.setFrequency(7300000)]);
+    eq("queued commands reach the radio in the order they were issued", vr2.state.hz, 7300000);
+    eq("the shadow model tracks what was last sent", l2.shadow.hz.v, 7300000);
+    eq("a value we only sent is marked asserted", l2.shadow.hz.p, "asserted");
+    await l2.readFreqMode();
+    eq("a value the radio reported is marked confirmed", l2.shadow.hz.p, "confirmed");
+    await l2.disconnect();
+
+    /* --- v1.2 bands and trace maths --- */
+    eq("14.250 MHz lands in the 20 m band", Bands.adif(14250000), "20m");
+    eq("145.500 MHz lands in the 2 m band", Bands.adif(145500000), "2m");
+    eq("a frequency between bands has no band label", Bands.adif(13000000), "");
+    ok("every preset that names a centre also names a mode",
+      Bands.PRESETS.filter(x => x.centre).every(x => CAT.modeById(x.mode)));
+    ok("every preset centre falls inside a real band",
+      Bands.PRESETS.filter(x => x.centre).every(x => Bands.forHz(x.centre) !== null));
+
+    const savedSweeps = App.sweeps;
+    App.sweeps = [
+      { t: 1, startHz: 145000000, stepHz: 5000, samples: [1, 9, 2, 0] },
+      { t: 2, startHz: 145000000, stepHz: 5000, samples: [3, 1, 2, 4] }
+    ];
+    eq("peak hold keeps the largest reading at each stop", traceSamples("hold").join(","), "3,9,2,4");
+    eq("averaging halves two sweeps correctly", traceSamples("avg").join(","), "2,5,2,2");
+    eq("the live trace is just the last sweep", traceSamples("live").join(","), "3,1,2,4");
+    const pk = peaksIn({ startHz: 145000000, stepHz: 5000, samples: [0, 8, 0, 3, 9, 1] }, 4);
+    eq("peak finding returns only the peaks above the floor", pk.length, 2);
+    eq("peaks come back strongest first", pk[0].s, 9);
+    eq("a peak carries the frequency of its stop", pk[0].hz, 145020000);
+    App.sweeps = savedSweeps;
+
+    /* --- v1.3 grids, distance, duplicates, ADIF in --- */
+    ok("a valid four character locator parses", Grid.toLatLon("FM19") !== null);
+    ok("a six character locator parses", Grid.toLatLon("FM19ab") !== null);
+    ok("nonsense is rejected as a locator", Grid.toLatLon("ZZ99") === null);
+    ok("a short string is rejected as a locator", Grid.toLatLon("FM") === null);
+    const ll = Grid.toLatLon("FM19");
+    ok("FM19 lands near Washington DC", Math.abs(ll.lat - 39.5) < 1 && Math.abs(ll.lon + 77) < 1,
+      "got " + ll.lat.toFixed(2) + ", " + ll.lon.toFixed(2));
+    const dc2la = Grid.distanceKm("FM19", "DM04");
+    ok("Washington to Los Angeles is around 3700 km", Math.abs(dc2la - 3700) < 250, "got " + dc2la);
+    eq("a square is zero distance from itself", Grid.distanceKm("FM19", "FM19"), 0);
+    const brg = Grid.bearing("FM19", "DM04");
+    ok("Los Angeles is roughly west of Washington", brg > 240 && brg < 290, "got " + brg);
+    ok("distance is null when a locator is missing", Grid.distanceKm("FM19", "") === null);
+
+    const savedQ2 = App.qsos;
+    App.qsos = [Schema.qso({ call: "W1AW", hz: 14250000, mode: "USB", utc: "2026-01-02T00:00:00.000Z" })];
+    eq("the same call on the same band and mode counts as a duplicate",
+      Dupes.priors("W1AW", 14280000, "USB").length, 1);
+    eq("LSB and USB count as the same mode for duplicates",
+      Dupes.priors("W1AW", 14280000, "LSB").length, 1);
+    eq("the same call on another band is not a duplicate",
+      Dupes.priors("W1AW", 145500000, "FM").length, 0);
+    eq("a different call is not a duplicate",
+      Dupes.priors("K1ABC", 14250000, "USB").length, 0);
+    App.qsos = savedQ2;
+
+    const roundTrip = (() => {
+      const saved = App.qsos;
+      App.qsos = [Schema.qso({ call: "G0ABC", hz: 7150000, mode: "LSB", utc: "2026-03-04T05:06:07.000Z",
+        sent: "59", rcvd: "55", grid: "IO91", note: "round trip" })];
+      const text = Log.toAdif();
+      App.qsos = saved;
+      return parseAdif(text);
+    })();
+    eq("ADIF import reads one record back out", roundTrip.length, 1);
+    eq("the callsign survives the ADIF round trip", roundTrip[0].call, "G0ABC");
+    eq("the frequency survives the ADIF round trip", roundTrip[0].hz, 7150000);
+    eq("SSB below 10 MHz comes back as LSB", roundTrip[0].mode, "LSB");
+    eq("the timestamp survives the ADIF round trip", roundTrip[0].utc.slice(0, 16), "2026-03-04T05:06");
+    eq("the grid survives the ADIF round trip", roundTrip[0].grid, "IO91");
+    ok("ADIF export now carries a band field", Log.toAdif !== undefined &&
+      (() => { const sv = App.qsos; App.qsos = [Schema.qso({ call: "W1AW", hz: 14250000, mode: "USB" })];
+        const t = Log.toAdif(); App.qsos = sv; return t.indexOf("<BAND:3>20m") >= 0; })());
+    eq("an ADIF file with no records imports nothing", parseAdif("<EOH>\n\n").length, 0);
+    eq("junk text imports nothing", parseAdif("this is not adif at all").length, 0);
+    ok("a field whose value contains an angle bracket is read by its length",
+      parseAdif("<EOH>\n<CALL:4>W1AW <COMMENT:5><evil <EOR>")[0].note === "<evil");
+
+    /* --- v1.1 constants and trials --- */
+    ok("every constant starts out marked assumed or verified, never blank",
+      Constants.DEFS.every(d => Constants.rec(d.key) && typeof Constants.rec(d.key).verified === "boolean"));
+    ok("every trial names at least one constant it settles",
+      Trials.LIST.every(t => Array.isArray(t.constants) && t.constants.length > 0));
+    ok("every constant a trial claims to settle actually exists",
+      Trials.LIST.every(t => t.constants.every(k => Constants.rec(k) !== undefined)));
+    ok("every trial has an id, a title, an explanation, and something to run",
+      Trials.LIST.every(t => t.id && t.title && t.what && typeof t.run === "function"));
+    ok("trial ids are unique", new Set(Trials.LIST.map(t => t.id)).size === Trials.LIST.length);
+    ok("the trial that keys the transmitter is flagged as such",
+      Trials.LIST.find(t => t.id === "ptt").danger === true);
+
+    /* the polarity derivation is the load bearing logic of the whole station */
+    const savedConsts = JSON.parse(JSON.stringify(Constants.values));
+    Constants.reset();
+    ok("a constant reads as assumed before any trial", Constants.rec("invSql").verified === false);
+    Constants.verify("invSql", true, "test");
+    ok("verifying a constant marks it verified", Constants.rec("invSql").verified === true);
+    ok("verifying a constant stamps a date", !!Constants.rec("invSql").when);
+    ok("verifying the signal bit reaches the decoder", link.inv.sql === true);
+    ok("the inverted decoder now reads the byte the other way",
+      CAT.decodeRxStatus(0x87, link.inv).signal === true);
+    Constants.verify("gapMs", 80, "test");
+    eq("verifying the gap reaches the link pacing", link.gapMs, 80);
+    Constants.verify("replyMs", 50, "test");
+    ok("a measured latency sizes the command timeout", link.timeoutMs === 400, "got " + link.timeoutMs);
+    Constants.setManual("invSql", false);
+    ok("setting a constant by hand drops it back to assumed", Constants.rec("invSql").verified === false);
+    ok("a hand set constant still reaches the decoder", link.inv.sql === false);
+    Constants.reset();
+    ok("resetting puts the gap back to the documented value", link.gapMs === 40);
+    ok("resetting marks everything assumed again",
+      Constants.DEFS.every(d => Constants.rec(d.key).verified === false));
+    Store.set("constants", savedConsts);
+    Constants.load();
+
+    /* --- v1.4 field layer --- */
+    ok("the icon generator produces something or fails quietly",
+      (() => { const u = Field.iconDataUrl(64); return u === null || String(u).indexOf("data:") === 0; })());
+    ok("holding the screen awake never throws when the API is absent",
+      (() => { try { Field.holdScreen(true); Field.holdScreen(false); return true; } catch (e) { return false; } })());
+    ok("the compact layout can be applied without error",
+      (() => { try { Field.applyCompact(); return true; } catch (e) { return false; } })());
+
+    /* --- rendering does not blow up --- */
+    let drew = true;
+    try { Scope.draw(null, null); } catch (e) { drew = false; }
+    ok("the bandscope draws its empty state without error", drew);
+
+    return { pass, fail, results };
+  }
+  return { run };
+})();
+
+async function runSelfTest() {
+  const out = $("testOut");
+  out.textContent = "Running...";
+  let r;
+  try { r = await SelfTest.run(); }
+  catch (e) { out.textContent = "Self test crashed: " + (e && e.message ? e.message : String(e)); return; }
+  clear(out);
+  out.appendChild(el("b", { text: r.pass + " passed, " + r.fail + " failed, " + (r.pass + r.fail) + " checks\n\n" }));
+  for (const t of r.results) {
+    out.appendChild(document.createTextNode((t.cond ? "  pass  " : "  FAIL  ") + t.name +
+      (t.detail ? "  (" + t.detail + ")" : "") + "\n"));
+  }
+  toast(r.fail ? r.fail + " self test checks failed" : "Self test passed, " + r.pass + " checks", !!r.fail);
+  return r;
+}
+
+/* =====================================================================
+   About panel
+   ===================================================================== */
+function buildAbout() {
+  const b = $("aboutBody");
+  clear(b);
+  const p = (t) => el("p", { text: t, style: "margin:0 0 10px" });
+  b.appendChild(el("div", { class: "mono", style: "margin-bottom:10px", text: "Halyard FI-119, v" + VERSION }));
+  b.appendChild(p("A control head for the Yaesu FT-897D. It speaks the radio's five byte CAT protocol over Web Serial, so it needs a level converter such as the Yaesu CT-62 on the eight pin CAT jack, and a browser with Web Serial (Chrome or Edge). Set the radio's menu 019 CAT RATE to match the rate chosen above."));
+  b.appendChild(p("Halyard runs entirely from disk. Nothing is uploaded, nothing is fetched, and your channels, log, and settings stay in this browser."));
+  b.appendChild(el("div", { class: "legend", text: "What the radio will and will not tell you" }));
+  b.appendChild(p("The FT-897D answers exactly three questions: frequency with mode, one receive status byte, and one transmit status byte. It cannot report tone, shift, clarifier, VFO, or memory contents, and it has no memory read or write commands at all. Everything else on this panel is Halyard's own record of what it sent, marked asserted rather than confirmed."));
+  b.appendChild(el("div", { class: "legend", text: "How much of this is verified" }));
+  const verified = Constants.DEFS.filter(d => Constants.rec(d.key) && Constants.rec(d.key).verified).length;
+  b.appendChild(p(verified + " of " + Constants.DEFS.length + " protocol constants have been measured against this radio. " +
+    (verified === Constants.DEFS.length
+      ? "Halyard is running on evidence rather than on assumptions."
+      : "The rest are still whatever the manuals claim. Work through the Trials station to settle them.")));
+
+  b.appendChild(el("div", { class: "legend", text: "Known limitations" }));
+  const ul = el("ul", { style: "margin:6px 0 12px;padding-left:18px" });
+  for (const t of [
+    "Any constant still marked assumed came out of published documentation, and published documentation for this radio contradicts itself. Run the trials.",
+    "The clarifier offset encoding is the least well documented command in the set. Its trial depends on you reading the radio's own display, so it is only as good as that reading.",
+    "The tone match trial needs a real toned signal on the air, so it cannot be completed on a quiet band.",
+    "The bandscope retunes the receiver to build its trace, so it is not usable while you are listening, and its vertical resolution is only the 16 steps the S-meter reports. Peak hold and averaging make it steadier, not finer.",
+    "Distances are great circle from Maidenhead squares, so they are accurate to roughly the size of the square, not to the metre.",
+    "The locker is a browser side channel bank. It cannot write to the radio's own memories, because CAT offers no way to do that.",
+    "Installing to a home screen and offline caching only apply when Halyard is served over http or https. From disk it is already offline and needs neither."
+  ]) ul.appendChild(el("li", { text: t }));
+  b.appendChild(ul);
+
+  b.appendChild(el("div", { class: "legend", text: "Version history" }));
+  const vl = el("ul", { style: "margin:6px 0 12px;padding-left:18px" });
+  for (const t of [
+    "1.0.0  Helm, bandscope, locker, log, and bench, with a virtual FT-897D so none of it needed a cable.",
+    "1.1.0  Trials station. Every protocol constant is now either measured from this radio or openly marked as an assumption.",
+    "1.2.0  Band presets, peak hold and averaging, a marker pair with a delta readout, and bulk harvesting of peaks into the locker.",
+    "1.3.0  ADIF import, band and duplicate awareness while logging, and great circle distance and bearing from your own grid.",
+    "1.4.0  Installable, keeps the screen awake through a long sweep, and lays the Helm out for one hand on a narrow screen."
+  ]) vl.appendChild(el("li", { text: t }));
+  b.appendChild(vl);
+  b.appendChild(el("div", { class: "legend", text: "Credits and licence" }));
+  b.appendChild(p("No third party libraries are vendored. All artwork is drawn from CSS and canvas primitives in this file. Licensed GPL-3.0."));
+  b.appendChild(p("Feedback: file an issue on the Halyard repository, or export the traffic log from the Bench station and send it along."));
+}
+
+/* =====================================================================
+   Export and import of everything
+   ===================================================================== */
+function exportAll() {
+  const doc = {
+    format: "halyard", version: VERSION, exported: new Date().toISOString(),
+    channels: App.channels, qsos: App.qsos,
+    settings: {
+      theme: Store.get("theme", "night"), baud: $("baudSel").value,
+      inv: link.inv, gapMs: link.gapMs, myGrid: ($("myGrid") && $("myGrid").value) || ""
+    },
+    constants: Constants.values,
+    evidence: Trials.evidence.slice(-400)
+  };
+  download("halyard-" + new Date().toISOString().slice(0, 10) + ".json", JSON.stringify(doc, null, 2), "application/json");
+}
+
+function importAll() {
+  const inp = el("input", { type: "file", accept: ".json,application/json" });
+  inp.addEventListener("change", () => {
+    const f = inp.files && inp.files[0];
+    if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      let doc;
+      try { doc = JSON.parse(String(rd.result)); }
+      catch (e) { toast("That file is not valid JSON", true); return; }
+      if (!doc || doc.format !== "halyard") { toast("That is not a Halyard export", true); return; }
+      const chans = Array.isArray(doc.channels) ? doc.channels.map(Schema.channel).filter(Boolean) : [];
+      const qs = Array.isArray(doc.qsos) ? doc.qsos.map(Schema.qso).filter(Boolean) : [];
+      App.channels = App.channels.concat(chans);
+      App.qsos = App.qsos.concat(qs);
+      Locker.save(); Log.save();
+      let consts = 0;
+      if (doc.constants && typeof doc.constants === "object") {
+        Store.set("constants", doc.constants);
+        Constants.load(); Constants.render(); Trials.render();
+        consts = Object.keys(Constants.values).filter(k => Constants.values[k].verified).length;
+      } else if (doc.settings && doc.settings.inv && typeof doc.settings.inv === "object") {
+        for (const k of ["sql", "tone", "disc", "ptt", "split"]) link.inv[k] = !!doc.settings.inv[k];
+        saveInv(); loadInvToUi();
+      }
+      if (doc.settings && typeof doc.settings.myGrid === "string" && $("myGrid")) {
+        $("myGrid").value = doc.settings.myGrid.slice(0, 8).toUpperCase();
+        Store.set("myGrid", $("myGrid").value);
+      }
+      if (Array.isArray(doc.evidence)) {
+        for (const line of doc.evidence.slice(-400)) if (typeof line === "string") Trials.evidence.push(line.slice(0, 300));
+        Trials.renderEvidence();
+      }
+      Log.render();
+      toast("Imported " + chans.length + " channels, " + qs.length + " contacts, and " +
+        consts + " verified constants");
+    };
+    rd.readAsText(f);
+  });
+  inp.click();
+}
+
+/* =====================================================================
+   Theme, tabs, and wiring
+   ===================================================================== */
+function applyTheme(name) {
+  document.documentElement.setAttribute("data-theme", name);
+  Store.set("theme", name);
+  $("themeSel").value = name;
+  if (App.sweeps.length || true) { try { Scope.draw(null, null); } catch (e) {} }
+}
+
+function showStation(id) {
+  for (const tab of document.querySelectorAll("nav.stations button")) {
+    const on = tab.id === "tab-" + id;
+    tab.setAttribute("aria-selected", on ? "true" : "false");
+    $(tab.getAttribute("aria-controls")).hidden = !on;
+  }
+  Store.set("station", id);
+  if (id === "scope") Scope.draw(null, null);
+}
+
+function centreOfView() {
+  const g = Scope.geom;
+  if (!g) return null;
+  return g.startHz + Math.floor(g.points / 2) * g.stepHz;
+}
+
+function saveInv() { Store.set("inv", link.inv); }
+function loadInvToUi() {
+  const map = { invSql: "sql", invTone: "tone", invDisc: "disc", invPtt: "ptt", invSplit: "split" };
+  for (const id in map) $(id).checked = !!link.inv[map[id]];
+}
+
+function wire() {
+  /* theme and about */
+  $("themeSel").addEventListener("change", () => applyTheme($("themeSel").value));
+  $("btnAbout").addEventListener("click", () => { buildAbout(); $("aboutDlg").showModal(); });
+  for (const b of document.querySelectorAll("[data-close]")) {
+    b.addEventListener("click", () => $(b.getAttribute("data-close")).close());
+  }
+
+  /* stations */
+  for (const tab of document.querySelectorAll("nav.stations button")) {
+    tab.addEventListener("click", () => showStation(tab.id.replace("tab-", "")));
+  }
+
+  /* link bar */
+  $("btnConnect").addEventListener("click", toggleConnect);
+  $("srcSel").addEventListener("change", () => {
+    $("baudSel").disabled = $("srcSel").value === "virtual";
+  });
+
+  /* helm */
+  for (const b of document.querySelectorAll("[data-step]")) {
+    b.addEventListener("click", () => stepFreq(Number(b.getAttribute("data-step"))));
+  }
+  $("btnApply").addEventListener("click", applyPanel);
+  $("btnRead").addEventListener("click", () => guarded(async () => {
+    await link.readFreqMode(); await link.readRxStatus(); await link.readTxStatus();
+    syncPanelFromShadow(); toast("Read back from the radio");
+  }));
+  $("btnVfo").addEventListener("click", () => guarded(() => link.toggleVfo()));
+  $("btnSplit").addEventListener("click", () => guarded(() => link.setSplit(!link.shadow.split.v)));
+  $("btnClar").addEventListener("click", () => guarded(() => link.setClar(!link.shadow.clar.v)));
+  $("btnLock").addEventListener("click", () => guarded(() => link.setLock(!link.shadow.lock.v)));
+  $("btnPtt").addEventListener("mousedown", pttDown);
+  $("btnPtt").addEventListener("touchstart", (e) => { e.preventDefault(); pttDown(); }, { passive: false });
+  window.addEventListener("mouseup", pttUp);
+  window.addEventListener("touchend", pttUp);
+  $("freqIn").addEventListener("keydown", (e) => { if (e.key === "Enter") applyPanel(); });
+  $("pollChk").addEventListener("change", () => { if ($("pollChk").checked) startPolling(); else stopPolling(); });
+
+  /* space bar transmit, only on the helm and never while typing */
+  window.addEventListener("keydown", (e) => {
+    if (e.code !== "Space" || e.repeat) return;
+    if ($("st-helm").hidden) return;
+    const t = e.target;
+    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT")) return;
+    e.preventDefault(); pttDown();
+  });
+  window.addEventListener("keyup", (e) => { if (e.code === "Space") pttUp(); });
+  window.addEventListener("blur", pttUp);
+
+  /* bandscope */
+  $("btnSweep").addEventListener("click", () => Scope.sweepLoop());
+  $("btnSweepOnce").addEventListener("click", () => Scope.sweepOnce());
+  $("btnScopeClear").addEventListener("click", () => {
+    App.sweeps.length = 0; clear($("peakBody")); Scope.draw(null, null); toast("Bandscope cleared");
+  });
+  $("btnScopePng").addEventListener("click", () => {
+    $("scopeCanvas").toBlob((blob) => {
+      if (!blob) { toast("Could not make a PNG", true); return; }
+      const url = URL.createObjectURL(blob);
+      const a = el("a", { href: url, download: "halyard-bandscope.png" });
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    });
+  });
+  $("btnScopeCsv").addEventListener("click", () => {
+    const csv = Scope.csv();
+    if (!csv) { toast("Run a sweep first", true); return; }
+    download("halyard-sweep.csv", csv, "text/csv");
+  });
+  for (const id of ["scCentre", "scSpan", "scStep", "scDwell"]) {
+    $(id).addEventListener("input", Scope.estimate);
+  }
+
+  /* locker */
+  $("btnChanNew").addEventListener("click", () => Locker.edit(null));
+  $("btnChanFromVfo").addEventListener("click", () => {
+    const s = link.shadow;
+    Locker.add({ name: CAT.formatMHz(s.hz.v), hz: s.hz.v, mode: s.mode.v, shift: s.shift.v,
+      offsetHz: s.offsetHz.v, toneMode: s.toneMode.v, ctcss: s.ctcss.v, dcs: s.dcs.v });
+    toast("Captured the current VFO into the locker");
+  });
+  $("btnChanCsvOut").addEventListener("click", () => download("halyard-channels.csv", Locker.toCsv(), "text/csv"));
+  $("btnChanCsvIn").addEventListener("click", () => {
+    const inp = el("input", { type: "file", accept: ".csv,text/csv" });
+    inp.addEventListener("change", () => {
+      const f = inp.files && inp.files[0];
+      if (!f) return;
+      const rd = new FileReader();
+      rd.onload = () => {
+        const n = Locker.fromCsv(String(rd.result));
+        toast(n ? "Imported " + n + " channels" : "No usable rows in that file", !n);
+      };
+      rd.readAsText(f);
+    });
+    inp.click();
+  });
+  $("chanFind").addEventListener("input", Locker.render);
+  $("chanArchived").addEventListener("change", Locker.render);
+  $("cSave").addEventListener("click", Locker.saveDialog);
+
+  /* log */
+  $("btnQsoAdd").addEventListener("click", Log.addFromPanel);
+  $("qFind").addEventListener("input", Log.render);
+  $("btnAdif").addEventListener("click", () => download("halyard-log.adi", Log.toAdif(), "text/plain"));
+  $("btnQsoCsv").addEventListener("click", () => download("halyard-log.csv", Log.toCsv(), "text/csv"));
+
+  /* bench */
+  for (const id of ["vDelay", "vDrop", "vCorrupt", "vFloor", "vSignals"]) {
+    $(id).addEventListener("change", applyVirtualOptions);
+  }
+  const invMap = { invSql: "sql", invTone: "tone", invDisc: "disc", invPtt: "ptt", invSplit: "split" };
+  const constKey = { sql: "invSql", tone: "invTone", disc: "invDisc", ptt: "invPtt", split: "invSplit" };
+  for (const id in invMap) {
+    $(id).addEventListener("change", () => {
+      Constants.setManual(constKey[invMap[id]], $(id).checked);
+      Trials.render(); renderHelm();
+    });
+  }
+  $("btnSelfTest").addEventListener("click", runSelfTest);
+  $("dbgChk").addEventListener("change", () => {
+    link.debug = $("dbgChk").checked;
+    Store.set("debug", link.debug);
+    toast(link.debug ? "Debug logging on, every block is recorded" : "Debug logging off");
+  });
+  $("btnTrafClear").addEventListener("click", () => { link.traffic.length = 0; renderTraffic(); });
+  $("btnTrafSave").addEventListener("click", () => {
+    const text = link.traffic.map(l => l.t + "\t" + l.dir + "\t" + l.bytes + "\t" + l.note).join("\n");
+    download("halyard-traffic.txt", text || "no traffic recorded", "text/plain");
+  });
+  $("btnExportAll").addEventListener("click", exportAll);
+  $("btnImportAll").addEventListener("click", importAll);
+  $("btnPower").addEventListener("click", () => guarded(() => link.power(true)));
+  $("btnPowerOff").addEventListener("click", () => guarded(() => link.power(false)));
+
+  /* v1.2 bandscope: presets, trace maths, markers, harvest */
+  $("scPreset").addEventListener("change", () => {
+    const pre = Bands.PRESETS.find(x => x.id === $("scPreset").value);
+    if (!pre || !pre.centre) return;
+    $("scCentre").value = (pre.centre / 1e6).toFixed(5);
+    $("scSpan").value = pre.span;
+    $("scStep").value = pre.step;
+    $("scMode").value = pre.mode;
+    Scope.estimate();
+    toast("Loaded the " + pre.name + " preset");
+  });
+  $("scTrace").addEventListener("change", () => Scope.draw(null, null));
+  $("btnMarkA").addEventListener("click", () => Scope.setMarker("A", Scope.markers.A === null ? centreOfView() : centreOfView()));
+  $("btnMarkB").addEventListener("click", () => Scope.setMarker("B", centreOfView()));
+  $("btnMarkClear").addEventListener("click", () => Scope.clearMarkers());
+  $("scopeCanvas").addEventListener("click", (e) => {
+    const hz = Scope.hzAtClientX(e.clientX);
+    if (hz === null) { toast("Run a sweep before placing markers", true); return; }
+    Scope.setMarker(Scope.markers.A === null || Scope.markers.B !== null ? "A" : "B", hz);
+    if (Scope.markers.A !== null && Scope.markers.B !== null) return;
+  });
+  $("scopeCanvas").addEventListener("dblclick", () => Scope.clearMarkers());
+  $("btnScopeHarvest").addEventListener("click", () => {
+    const rec = App.sweeps[App.sweeps.length - 1];
+    if (!rec) { toast("Run a sweep first", true); return; }
+    const found = peaksIn(rec, 4);
+    if (!found.length) { toast("Nothing above S4 in that sweep", true); return; }
+    let added = 0;
+    for (const f of found) {
+      const clash = App.channels.some(c => Math.abs(c.hz - f.hz) < rec.stepHz);
+      if (clash) continue;
+      Locker.add({ name: CAT.formatMHz(f.hz), hz: f.hz, mode: $("scMode").value, tag: "harvested" });
+      added++;
+    }
+    toast(added ? "Harvested " + added + " new channels into the locker" : "Every peak is already in the locker");
+  });
+
+  /* v1.3 log */
+  $("qCall").addEventListener("input", Log.checkDupe);
+  $("btnAdifIn").addEventListener("click", () => {
+    const inp = el("input", { type: "file", accept: ".adi,.adif,text/plain" });
+    inp.addEventListener("change", () => {
+      const f = inp.files && inp.files[0];
+      if (!f) return;
+      const rd = new FileReader();
+      rd.onload = () => {
+        const r = Log.importAdif(String(rd.result));
+        toast(r.added ? "Imported " + r.added + " contacts, skipped " + r.skipped + " already present"
+          : "No new contacts in that file", !r.added);
+      };
+      rd.readAsText(f);
+    });
+    inp.click();
+  });
+  $("myGrid").addEventListener("change", () => {
+    const g = $("myGrid").value.trim().toUpperCase();
+    if (g && !Grid.toLatLon(g)) { toast("That is not a Maidenhead locator", true); return; }
+    $("myGrid").value = g;
+    Store.set("myGrid", g);
+    Log.render();
+  });
+
+  /* v1.1 trials */
+  $("btnTrialAll").addEventListener("click", () => Trials.runAll());
+  $("btnTrialReport").addEventListener("click", () =>
+    download("halyard-validation-" + new Date().toISOString().slice(0, 10) + ".txt", Constants.report(), "text/plain"));
+  $("btnTrialReset").addEventListener("click", () => {
+    Constants.reset(); Trials.render();
+    toast("Every constant is back to what the manuals claim");
+  });
+  $("btnEvidClear").addEventListener("click", () => Trials.clearEvidence());
+
+  /* the link tells the UI when anything changed */
+  link.on((what) => {
+    if (what === "traffic") renderTraffic();
+    else renderHelm();
+  });
+}
+
+/* =====================================================================
+   Boot
+   ===================================================================== */
+function boot() {
+  $("verFoot").textContent = "v" + VERSION;
+  fillModeSelects();
+  fillToneSelects();
+
+  applyTheme(Store.get("theme", "night"));
+
+  fillSelect($("scPreset"), Bands.PRESETS, x => x.id, x => x.name);
+  $("scPreset").value = "";
+
+  Constants.load();
+  loadInvToUi();
+
+  const savedGrid = Store.get("myGrid", "");
+  if (typeof savedGrid === "string") $("myGrid").value = savedGrid.slice(0, 8).toUpperCase();
+
+  link.debug = !!Store.get("debug", false);
+  $("dbgChk").checked = link.debug;
+
+  Locker.load();
+  Log.load();
+
+  wire();
+
+  Constants.render();
+  Trials.render();
+  Trials.renderEvidence();
+  Field.start();
+
+  Locker.render();
+  Log.render();
+  Log.checkDupe();
+  renderHelm();
+  syncPanelFromShadow();
+  renderTraffic();
+  Scope.estimate();
+  showStation(Store.get("station", "helm"));
+
+  if (!SerialTransport.supported()) {
+    $("srcSel").value = "virtual";
+    $("baudSel").disabled = true;
+    toast("No Web Serial in this browser, so the virtual radio is selected");
+  }
+}
+
+
+/* =====================================================================
+   v1.1  CONSTANTS
+   Every number Halyard relies on is either ASSUMED, meaning it came out
+   of a manual and has never been checked, or VERIFIED, meaning this
+   radio demonstrated it on a given date. Trials move them across.
+   ===================================================================== */
+const Constants = (() => {
+  const DEFS = [
+    { key: "invSql",   label: "Signal bit",       dflt: false, fmt: v => v ? "inverted" : "as documented" },
+    { key: "invTone",  label: "Tone match bit",   dflt: false, fmt: v => v ? "inverted" : "as documented" },
+    { key: "invDisc",  label: "Centred bit",      dflt: false, fmt: v => v ? "inverted" : "as documented" },
+    { key: "invPtt",   label: "PTT bit",          dflt: false, fmt: v => v ? "inverted" : "as documented" },
+    { key: "invSplit", label: "Split bit",        dflt: false, fmt: v => v ? "inverted" : "as documented" },
+    { key: "gapMs",    label: "Inter block gap",  dflt: 40,    fmt: v => v + " ms" },
+    { key: "settleMs", label: "Retune settle",    dflt: 60,    fmt: v => v + " ms" },
+    { key: "replyMs",  label: "Reply latency",    dflt: null,  fmt: v => v === null ? "not measured" : v + " ms median" },
+    { key: "clarUnit", label: "Clarifier units",  dflt: "assumed 10 Hz", fmt: v => String(v) }
+  ];
+  const byKey = (k) => DEFS.find(d => d.key === k);
+  let values = {};
+
+  function load() {
+    const saved = Store.get("constants", null);
+    values = {};
+    for (const d of DEFS) values[d.key] = { v: d.dflt, verified: false, when: null, how: "" };
+    if (saved && typeof saved === "object") {
+      for (const d of DEFS) {
+        const r = saved[d.key];
+        if (!r || typeof r !== "object") continue;
+        const t = typeof d.dflt;
+        let v = r.v;
+        if (t === "boolean") v = !!v;
+        else if (t === "number") { v = Number(v); if (!Number.isFinite(v)) v = d.dflt; }
+        else if (d.dflt === null && v !== null) { v = Number(v); if (!Number.isFinite(v)) v = null; }
+        else v = String(v === undefined || v === null ? d.dflt : v).slice(0, 60);
+        values[d.key] = { v, verified: !!r.verified, when: r.when ? String(r.when).slice(0, 30) : null,
+          how: String(r.how || "").slice(0, 200) };
+      }
+    }
+    apply();
+  }
+  function save() { Store.set("constants", values); }
+  function get(k) { return values[k] ? values[k].v : (byKey(k) || {}).dflt; }
+  function rec(k) { return values[k]; }
+
+  function verify(k, v, how) {
+    if (!values[k]) return;
+    values[k] = { v, verified: true, when: new Date().toISOString(), how: String(how || "").slice(0, 200) };
+    save(); apply(); render();
+  }
+  function setManual(k, v) {
+    if (!values[k]) return;
+    values[k] = { v, verified: false, when: null, how: "set by hand" };
+    save(); apply(); render();
+  }
+  function reset() {
+    for (const d of DEFS) values[d.key] = { v: d.dflt, verified: false, when: null, how: "" };
+    save(); apply(); render();
+  }
+
+  /* push the constants into the parts of the instrument that use them */
+  function apply() {
+    link.inv.sql   = !!get("invSql");
+    link.inv.tone  = !!get("invTone");
+    link.inv.disc  = !!get("invDisc");
+    link.inv.ptt   = !!get("invPtt");
+    link.inv.split = !!get("invSplit");
+    const gap = Number(get("gapMs"));
+    if (Number.isFinite(gap) && gap >= 0) link.gapMs = clamp(gap, 0, 500);
+    const reply = get("replyMs");
+    if (Number.isFinite(Number(reply)) && reply !== null) {
+      link.timeoutMs = clamp(Math.round(Number(reply) * 8), 300, 5000);
+    }
+    if (typeof loadInvToUi === "function" && $("invSql")) loadInvToUi();
+  }
+
+  function render() {
+    const g = $("constGrid");
+    if (!g) return;
+    clear(g);
+    let verified = 0;
+    for (const d of DEFS) {
+      const r = values[d.key];
+      if (r.verified) verified++;
+      const box = el("div", { class: "sunk", style: "padding:8px" }, [
+        el("div", { class: "legend", text: d.label }),
+        el("div", { class: "mono", style: "margin:3px 0 5px", text: d.fmt(r.v) }),
+        el("span", { class: "prov " + (r.verified ? "confirmed" : "asserted"),
+          text: r.verified ? "verified" : "assumed" })
+      ]);
+      if (r.verified && r.when) {
+        box.appendChild(el("div", { class: "tiny", style: "margin-top:5px", text: r.when.slice(0, 10) }));
+      }
+      if (r.how) box.appendChild(el("div", { class: "tiny", style: "margin-top:2px", text: r.how }));
+      g.appendChild(box);
+    }
+    const sum = $("trialSummary");
+    if (sum) sum.textContent = verified + " of " + DEFS.length + " constants verified against this radio";
+    return verified;
+  }
+
+  function report() {
+    const lines = ["Halyard " + FI + " v" + VERSION + " validation report",
+      "Generated " + new Date().toISOString(), ""];
+    for (const d of DEFS) {
+      const r = values[d.key];
+      lines.push(d.label.padEnd(20) + String(d.fmt(r.v)).padEnd(24) +
+        (r.verified ? "VERIFIED " + (r.when || "").slice(0, 10) : "assumed"));
+      if (r.how) lines.push("    " + r.how);
+    }
+    lines.push("", "Evidence", "");
+    for (const e of Trials.evidence) lines.push(e);
+    return lines.join("\n");
+  }
+
+  return { DEFS, load, save, get, rec, verify, setManual, reset, apply, render, report,
+    get values() { return values; } };
+})();
+
+/* =====================================================================
+   v1.1  TRIALS
+   Each trial isolates one unknown, takes real measurements from the
+   radio, and derives the constant. Nothing here guesses.
+   ===================================================================== */
+const Trials = (() => {
+  const evidence = [];
+  let abort = false;
+
+  function note(text) {
+    const line = new Date().toISOString().slice(11, 19) + "  " + text;
+    evidence.push(line);
+    if (evidence.length > 400) evidence.splice(0, evidence.length - 400);
+    renderEvidence();
+  }
+  function renderEvidence() {
+    const out = $("evidOut");
+    if (!out) return;
+    if (!evidence.length) { out.textContent = "No measurements recorded yet."; return; }
+    out.textContent = evidence.join("\n");
+    out.scrollTop = out.scrollHeight;
+  }
+
+  /* operator prompt, resolves to the chosen value or null when abandoned */
+  function ask(prompt, options) {
+    return new Promise((resolve) => {
+      const dlg = $("trialDlg");
+      $("trialPrompt").textContent = prompt;
+      const box = $("trialAnswer");
+      clear(box);
+      let picked = options && options.length ? options[0].value : true;
+      if (options && options.length) {
+        for (const o of options) {
+          const id = "ta-" + Math.random().toString(36).slice(2, 8);
+          const input = el("input", { type: "radio", name: "trialAnswer", id, value: String(o.value) });
+          if (o.value === picked) input.checked = true;
+          input.addEventListener("change", () => { picked = o.value; });
+          box.appendChild(el("label", { class: "check", for: id }, [input, el("span", { text: o.label })]));
+        }
+      }
+      const done = (v) => {
+        $("trialGo").removeEventListener("click", onGo);
+        $("trialAbort").removeEventListener("click", onNo);
+        dlg.close();
+        resolve(v);
+      };
+      const onGo = () => done(picked);
+      const onNo = () => { abort = true; done(null); };
+      $("trialGo").addEventListener("click", onGo);
+      $("trialAbort").addEventListener("click", onNo);
+      dlg.showModal();
+    });
+  }
+
+  const need = () => { if (!link.connected) throw new Error("Connect a radio before running trials"); };
+  const rawRx = async () => (await link.exchange(CAT.simple(CAT.OP.READ_RX), 1, "trial rx"))[0];
+  const rawTx = async () => (await link.exchange(CAT.simple(CAT.OP.READ_TX), 1, "trial tx"))[0];
+
+  /* derive a bit polarity from two samples that should differ in that bit */
+  function derivePolarity(name, mask, quietByte, activeByte, documentedActiveIsLow) {
+    const q = (quietByte & mask) !== 0;
+    const a = (activeByte & mask) !== 0;
+    if (q === a) return { ok: false, why: name + ": bit did not move between the two samples (" +
+      hex(quietByte) + " then " + hex(activeByte) + "), so nothing can be concluded" };
+    // documented behaviour: the bit is LOW in the active condition
+    const matchesDocumented = documentedActiveIsLow ? (q === true && a === false) : (q === false && a === true);
+    return { ok: true, inverted: !matchesDocumented,
+      why: "quiet " + hex(quietByte) + ", active " + hex(activeByte) + ", bit " +
+        (matchesDocumented ? "follows" : "contradicts") + " the documented sense" };
+  }
+
+  const LIST = [
+    {
+      id: "sql", title: "Signal present polarity",
+      what: "Reads the receive status byte with the squelch closed and again with it open, and works out which way bit 7 runs.",
+      constants: ["invSql"],
+      async run() {
+        need();
+        if (await ask("Tune to a clear frequency and close the squelch so the radio is silent. Continue when it is quiet.") === null) return;
+        const quiet = await rawRx();
+        note("squelch closed, RX status " + hex(quiet) + " (S" + (quiet & 0x0F) + ")");
+        if (await ask("Now open the squelch fully, or tune onto a steady signal, so the receiver is passing audio. Continue when it is.") === null) return;
+        const active = await rawRx();
+        note("squelch open, RX status " + hex(active) + " (S" + (active & 0x0F) + ")");
+        const d = derivePolarity("signal", 0x80, quiet, active, true);
+        if (!d.ok) { note("inconclusive: " + d.why); toast("Inconclusive, see the evidence log", true); return; }
+        Constants.verify("invSql", d.inverted, d.why);
+        note("signal bit " + (d.inverted ? "INVERTED" : "as documented"));
+        toast("Signal bit settled: " + (d.inverted ? "inverted" : "as documented"));
+      }
+    },
+    {
+      id: "disc", title: "Discriminator centred polarity",
+      what: "Compares bit 5 of the receive status byte with no signal and with a signal on frequency.",
+      constants: ["invDisc"],
+      async run() {
+        need();
+        if (await ask("Tune to an empty frequency with no signal at all. Continue when ready.") === null) return;
+        const quiet = await rawRx();
+        note("no signal, RX status " + hex(quiet));
+        if (await ask("Now tune onto a signal that is exactly on frequency, such as a local repeater output. Continue when it is present.") === null) return;
+        const active = await rawRx();
+        note("signal on frequency, RX status " + hex(active));
+        const d = derivePolarity("centred", 0x20, quiet, active, true);
+        if (!d.ok) { note("inconclusive: " + d.why); toast("Inconclusive, see the evidence log", true); return; }
+        Constants.verify("invDisc", d.inverted, d.why);
+        note("centred bit " + (d.inverted ? "INVERTED" : "as documented"));
+      }
+    },
+    {
+      id: "tone", title: "Tone match polarity",
+      what: "Compares bit 6 of the receive status byte with the decoder muted and with a correctly toned signal present.",
+      constants: ["invTone"],
+      async run() {
+        need();
+        if (await ask("Set tone decode on for a repeater you can hear, then wait until it is idle and silent. Continue when it is.") === null) return;
+        const quiet = await rawRx();
+        note("tone decode armed, no signal, RX status " + hex(quiet));
+        if (await ask("Now key that repeater, or wait for someone else to, so a signal with the correct tone is present. Continue while it is on the air.") === null) return;
+        const active = await rawRx();
+        note("correct tone present, RX status " + hex(active));
+        const d = derivePolarity("tone match", 0x40, quiet, active, true);
+        if (!d.ok) { note("inconclusive: " + d.why); toast("Inconclusive, see the evidence log", true); return; }
+        Constants.verify("invTone", d.inverted, d.why);
+        note("tone match bit " + (d.inverted ? "INVERTED" : "as documented"));
+      }
+    },
+    {
+      id: "ptt", title: "PTT polarity",
+      what: "Reads the transmit status byte while receiving, keys the radio briefly, reads it again, and drops back to receive.",
+      constants: ["invPtt"],
+      danger: true,
+      async run() {
+        need();
+        if (await ask("This trial will key the transmitter for about a second. Confirm a dummy load or a matched antenna is connected, and that the frequency is one you may transmit on.",
+          [{ value: "go", label: "The radio is safe to key" }, { value: "no", label: "Stop" }]) !== "go") return;
+        const rx = await rawTx();
+        note("receiving, TX status " + hex(rx));
+        await link.setPtt(true);
+        await sleep(400);
+        const tx = await rawTx();
+        note("transmitting, TX status " + hex(tx) + " (PO " + (tx & 0x0F) + ")");
+        await link.setPtt(false);
+        const d = derivePolarity("ptt", 0x80, rx, tx, true);
+        if (!d.ok) { note("inconclusive: " + d.why); toast("Inconclusive, see the evidence log", true); return; }
+        Constants.verify("invPtt", d.inverted, d.why);
+        note("PTT bit " + (d.inverted ? "INVERTED" : "as documented"));
+        if ((tx & 0x0F) === 0) note("warning: the power meter read zero while keyed, so check the output before trusting the PO bar");
+      }
+    },
+    {
+      id: "split", title: "Split polarity",
+      what: "Turns split off, reads the transmit status byte, turns it on, reads again, then restores what it found.",
+      constants: ["invSplit"],
+      async run() {
+        need();
+        const was = link.shadow.split.v;
+        await link.setSplit(false); await sleep(120);
+        const off = await rawTx();
+        note("split off, TX status " + hex(off));
+        await link.setSplit(true); await sleep(120);
+        const on = await rawTx();
+        note("split on, TX status " + hex(on));
+        await link.setSplit(!!was);
+        const d = derivePolarity("split", 0x20, off, on, true);
+        if (!d.ok) { note("inconclusive: " + d.why); toast("Inconclusive, see the evidence log", true); return; }
+        Constants.verify("invSplit", d.inverted, d.why);
+        note("split bit " + (d.inverted ? "INVERTED" : "as documented"));
+      }
+    },
+    {
+      id: "gap", title: "Minimum inter block gap",
+      what: "Sends alternating frequency commands at shrinking gaps and reads back after each burst. The smallest gap that never loses a command is the answer.",
+      constants: ["gapMs"],
+      async run() {
+        need();
+        const home = link.shadow.hz.v;
+        const a = 145000000, b = 145100000;
+        const candidates = [0, 5, 10, 15, 20, 30, 40, 60, 80, 120];
+        const saved = link.gapMs;
+        let best = null;
+        try {
+          for (const g of candidates) {
+            if (abort) break;
+            link.gapMs = g;
+            let clean = 0;
+            for (let round = 0; round < 4; round++) {
+              for (let i = 0; i < 6; i++) await link.exchange(CAT.setFrequency(i % 2 ? b : a), 0, "gap probe");
+              await link.exchange(CAT.setFrequency(b), 0, "gap probe");
+              await sleep(80);
+              const back = CAT.decodeFreqMode(await link.exchange(CAT.simple(CAT.OP.READ_FREQ_MODE), 5, "gap read"));
+              if (back.hz === b) clean++;
+            }
+            note("gap " + g + " ms: " + clean + " of 4 bursts survived intact");
+            if (clean === 4) { best = g; break; }
+          }
+        } finally {
+          link.gapMs = saved;
+          try { await link.setFrequency(home); } catch (e) {}
+        }
+        if (best === null) {
+          note("no gap up to 120 ms was reliable, which points at wiring, baud rate, or menu 019 rather than pacing");
+          toast("No gap was reliable. Check the cable and CAT rate.", true);
+          return;
+        }
+        const withMargin = Math.max(best, Math.round(best * 1.5));
+        Constants.verify("gapMs", withMargin, "smallest clean gap was " + best + " ms, stored with 50 percent margin");
+        note("minimum clean gap " + best + " ms, adopting " + withMargin + " ms");
+        toast("Gap settled at " + withMargin + " ms");
+      }
+    },
+    {
+      id: "settle", title: "Retune settle time",
+      what: "Jumps onto a steady carrier and polls the S-meter until the reading stops climbing. That interval is the floor for bandscope dwell.",
+      constants: ["settleMs"],
+      async run() {
+        need();
+        if (await ask("Tune to a steady, constant carrier you can rely on, such as a beacon or an unmodulated repeater. The trial will jump away and come back five times. Continue when one is tuned.") === null) return;
+        const target = link.shadow.hz.v;
+        const away = target + 500000;
+        const times = [];
+        for (let trial = 0; trial < 5; trial++) {
+          if (abort) break;
+          await link.setFrequency(away);
+          await sleep(200);
+          await link.setFrequency(target);
+          const t0 = Date.now();
+          let stableSince = null, lastS = -1, settled = null;
+          while (Date.now() - t0 < 800) {
+            const s = await link.probeS();
+            if (s === lastS) {
+              if (stableSince === null) stableSince = Date.now();
+              if (Date.now() - stableSince >= 80) { settled = stableSince - t0; break; }
+            } else { lastS = s; stableSince = null; }
+            await sleep(10);
+          }
+          if (settled !== null) { times.push(settled); note("settle trial " + (trial + 1) + ": " + settled + " ms to a steady S" + lastS); }
+          else note("settle trial " + (trial + 1) + ": never steadied inside 800 ms");
+        }
+        if (!times.length) { toast("The reading never steadied. Try a stronger, steadier carrier.", true); return; }
+        times.sort((x, y) => x - y);
+        const med = times[Math.floor(times.length / 2)];
+        const adopt = clamp(Math.round(med * 1.5) + 10, 20, 2000);
+        Constants.verify("settleMs", adopt, "median " + med + " ms over " + times.length + " jumps, stored with margin");
+        note("median settle " + med + " ms, adopting " + adopt + " ms as the dwell floor");
+        toast("Settle time measured at " + med + " ms");
+      }
+    },
+    {
+      id: "latency", title: "Reply latency",
+      what: "Times twenty frequency reads to find how long this radio and cable actually take to answer, and sizes the command timeout from that.",
+      constants: ["replyMs"],
+      async run() {
+        need();
+        const times = [];
+        for (let i = 0; i < 20; i++) {
+          if (abort) break;
+          const t0 = Date.now();
+          try {
+            await link.exchange(CAT.simple(CAT.OP.READ_FREQ_MODE), 5, "latency probe");
+            times.push(Date.now() - t0);
+          } catch (e) { note("read " + (i + 1) + " failed: " + e.message); }
+        }
+        if (times.length < 5) { toast("Too few replies came back to measure anything", true); return; }
+        times.sort((a, b) => a - b);
+        const med = times[Math.floor(times.length / 2)];
+        const worst = times[times.length - 1];
+        Constants.verify("replyMs", med, "median of " + times.length + " reads, worst " + worst + " ms");
+        note("latency min " + times[0] + " ms, median " + med + " ms, worst " + worst + " ms");
+        note("command timeout now " + link.timeoutMs + " ms");
+        toast("Latency median " + med + " ms");
+      }
+    },
+    {
+      id: "clar", title: "Clarifier encoding",
+      what: "Sends a clarifier offset of plus 1.23 kHz under the assumed encoding and asks what the radio actually put on its display.",
+      constants: ["clarUnit"],
+      async run() {
+        need();
+        await link.setClar(true);
+        await link.setClarOffset(1230);
+        const answer = await ask("Halyard has sent a clarifier offset intended to read plus 1.23 kHz. Look at the radio's clarifier display and pick what it shows.", [
+          { value: "1.23", label: "Plus 1.23 kHz, which is what was intended" },
+          { value: "0.123", label: "Plus 123 Hz, ten times too small" },
+          { value: "12.3", label: "Plus 12.3 kHz, ten times too large" },
+          { value: "none", label: "Nothing changed, or the clarifier did not move" },
+          { value: "other", label: "Something else entirely" }
+        ]);
+        if (answer === null) return;
+        note("clarifier probe: operator reports " + answer);
+        if (answer === "1.23") {
+          Constants.verify("clarUnit", "10 Hz units, confirmed", "sent 1230 Hz and the radio displayed 1.23 kHz");
+          toast("Clarifier encoding confirmed");
+        } else if (answer === "0.123") {
+          Constants.verify("clarUnit", "1 Hz units", "sent 1230 Hz, radio showed 123 Hz, so the magnitude is one BCD decade out");
+          toast("Clarifier encoding is a decade out, recorded");
+        } else if (answer === "12.3") {
+          Constants.verify("clarUnit", "100 Hz units", "sent 1230 Hz, radio showed 12.3 kHz, so the magnitude is one BCD decade out the other way");
+          toast("Clarifier encoding is a decade out, recorded");
+        } else {
+          Constants.verify("clarUnit", "no response", "sent 1230 Hz and the clarifier did not follow, so this command should not be trusted on this radio");
+          toast("Clarifier did not respond, recorded", true);
+        }
+        await link.setClarOffset(0);
+      }
+    }
+  ];
+
+  async function run(id) {
+    const t = LIST.find(x => x.id === id);
+    if (!t) return;
+    abort = false;
+    const btn = $("trial-" + id);
+    if (btn) { btn.disabled = true; btn.textContent = "Running"; }
+    note("--- " + t.title + " ---");
+    try { await t.run(); }
+    catch (e) { note("trial failed: " + (e && e.message ? e.message : String(e))); toast(e.message || String(e), true); }
+    finally {
+      if (btn) { btn.disabled = false; btn.textContent = "Run"; }
+      render(); Constants.render(); renderHelm();
+    }
+  }
+
+  async function runAll() {
+    abort = false;
+    for (const t of LIST) {
+      if (abort) { note("run abandoned by the operator"); break; }
+      await run(t.id);
+    }
+  }
+
+  function render() {
+    const list = $("trialList");
+    if (!list) return;
+    clear(list);
+    for (const t of LIST) {
+      const done = t.constants.every(k => Constants.rec(k) && Constants.rec(k).verified);
+      const head = el("div", { class: "row", style: "justify-content:space-between;gap:8px" }, [
+        el("div", { class: "row", style: "gap:8px" }, [
+          el("span", { class: "legend", text: t.title }),
+          el("span", { class: "prov " + (done ? "confirmed" : "asserted"), text: done ? "verified" : "not run" }),
+          t.danger ? el("span", { class: "prov", style: "border-color:var(--tx);color:var(--tx)", text: "keys the radio" }) : null
+        ]),
+        el("button", { class: "slim", type: "button", id: "trial-" + t.id, text: "Run",
+          onclick: () => run(t.id) })
+      ]);
+      list.appendChild(el("div", { class: "sunk", style: "padding:10px" }, [
+        head, el("p", { class: "tiny", style: "margin:6px 0 0", text: t.what })
+      ]));
+    }
+  }
+
+  return { LIST, run, runAll, render, renderEvidence, note, evidence,
+    clearEvidence() { evidence.length = 0; renderEvidence(); } };
+})();
+
+
+/* =====================================================================
+   v1.2  BAND PRESETS, TRACE MATHS, MARKERS, HARVEST
+   ===================================================================== */
+const Bands = (() => {
+  /* name, low Hz, high Hz, ADIF band label */
+  const PLAN = [
+    { name: "160 m",  lo: 1800000,   hi: 2000000,   adif: "160m" },
+    { name: "80 m",   lo: 3500000,   hi: 4000000,   adif: "80m"  },
+    { name: "60 m",   lo: 5330000,   hi: 5410000,   adif: "60m"  },
+    { name: "40 m",   lo: 7000000,   hi: 7300000,   adif: "40m"  },
+    { name: "30 m",   lo: 10100000,  hi: 10150000,  adif: "30m"  },
+    { name: "20 m",   lo: 14000000,  hi: 14350000,  adif: "20m"  },
+    { name: "17 m",   lo: 18068000,  hi: 18168000,  adif: "17m"  },
+    { name: "15 m",   lo: 21000000,  hi: 21450000,  adif: "15m"  },
+    { name: "12 m",   lo: 24890000,  hi: 24990000,  adif: "12m"  },
+    { name: "10 m",   lo: 28000000,  hi: 29700000,  adif: "10m"  },
+    { name: "6 m",    lo: 50000000,  hi: 54000000,  adif: "6m"   },
+    { name: "2 m",    lo: 144000000, hi: 148000000, adif: "2m"   },
+    { name: "70 cm",  lo: 420000000, hi: 450000000, adif: "70cm" }
+  ];
+  function forHz(hz) { return PLAN.find(b => hz >= b.lo && hz <= b.hi) || null; }
+  function adif(hz) { const b = forHz(hz); return b ? b.adif : ""; }
+  function label(hz) { const b = forHz(hz); return b ? b.name : "out of band"; }
+
+  /* sweep presets, chosen because these are the segments worth staring at */
+  const PRESETS = [
+    { id: "", name: "Choose a preset" },
+    { id: "2m-simplex", name: "2 m simplex",       centre: 146500000, span: 1000,  step: 20,   mode: "FM" },
+    { id: "2m-rptr",    name: "2 m repeater outputs", centre: 146500000, span: 2000, step: 15, mode: "FM" },
+    { id: "2m-calling", name: "2 m calling",       centre: 146520000, span: 100,   step: 5,    mode: "FM" },
+    { id: "2m-ssb",     name: "2 m SSB and CW",    centre: 144200000, span: 400,   step: 2,    mode: "USB" },
+    { id: "70cm-rptr",  name: "70 cm repeaters",   centre: 445000000, span: 10000, step: 25,   mode: "FM" },
+    { id: "6m",         name: "6 m calling",       centre: 50125000,  span: 300,   step: 2,    mode: "USB" },
+    { id: "10m-fm",     name: "10 m FM",           centre: 29600000,  span: 400,   step: 10,   mode: "FM" },
+    { id: "20m-ssb",    name: "20 m phone",        centre: 14250000,  span: 350,   step: 2,    mode: "USB" },
+    { id: "40m-ssb",    name: "40 m phone",        centre: 7200000,   span: 300,   step: 2,    mode: "LSB" },
+    { id: "40m-cw",     name: "40 m CW",           centre: 7030000,   span: 60,    step: 0.5,  mode: "CW"  }
+  ];
+  return { PLAN, PRESETS, forHz, adif, label };
+})();
+
+/* combine the kept sweeps into whichever trace the operator asked for */
+function traceSamples(mode, live) {
+  const sweeps = App.sweeps;
+  if (mode === "live" || !sweeps.length) return live ? live.samples : (sweeps.length ? sweeps[sweeps.length - 1].samples : []);
+  const width = Math.max.apply(null, sweeps.map(s => s.samples.length));
+  const out = new Array(width).fill(0);
+  if (mode === "hold") {
+    for (const s of sweeps) for (let i = 0; i < s.samples.length; i++) if (s.samples[i] > out[i]) out[i] = s.samples[i];
+    if (live) for (let i = 0; i < live.samples.length; i++) if (live.samples[i] > out[i]) out[i] = live.samples[i];
+  } else {
+    const n = new Array(width).fill(0);
+    for (const s of sweeps) for (let i = 0; i < s.samples.length; i++) { out[i] += s.samples[i]; n[i]++; }
+    for (let i = 0; i < width; i++) out[i] = n[i] ? out[i] / n[i] : 0;
+  }
+  return out;
+}
+
+function peaksIn(rec, floor) {
+  const found = [];
+  for (let i = 1; i < rec.samples.length - 1; i++) {
+    const s = rec.samples[i];
+    if (s >= floor && s >= rec.samples[i - 1] && s > rec.samples[i + 1]) {
+      found.push({ hz: rec.startHz + i * rec.stepHz, s });
+    }
+  }
+  return found.sort((a, b) => b.s - a.s);
+}
+
+/* =====================================================================
+   v1.3  MAIDENHEAD, DISTANCE, DUPLICATES, ADIF IN
+   ===================================================================== */
+const Grid = (() => {
+  function toLatLon(gridRaw) {
+    const g = String(gridRaw || "").trim().toUpperCase();
+    if (!/^[A-R]{2}[0-9]{2}([A-X]{2}([0-9]{2})?)?$/.test(g)) return null;
+    let lon = (g.charCodeAt(0) - 65) * 20 - 180;
+    let lat = (g.charCodeAt(1) - 65) * 10 - 90;
+    lon += Number(g[2]) * 2;
+    lat += Number(g[3]) * 1;
+    if (g.length >= 6) {
+      lon += (g.charCodeAt(4) - 65) * (2 / 24);
+      lat += (g.charCodeAt(5) - 65) * (1 / 24);
+      if (g.length >= 8) {
+        lon += Number(g[6]) * (2 / 240);
+        lat += Number(g[7]) * (1 / 240);
+        lon += 1 / 240; lat += 1 / 480;
+      } else { lon += 1 / 24; lat += 1 / 48; }
+    } else { lon += 1; lat += 0.5; }
+    return { lat, lon };
+  }
+  const rad = (d) => d * Math.PI / 180;
+  const deg = (r) => r * 180 / Math.PI;
+  function distanceKm(a, b) {
+    const p1 = toLatLon(a), p2 = toLatLon(b);
+    if (!p1 || !p2) return null;
+    const R = 6371;
+    const dLat = rad(p2.lat - p1.lat), dLon = rad(p2.lon - p1.lon);
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(p1.lat)) * Math.cos(rad(p2.lat)) * Math.sin(dLon / 2) ** 2;
+    return Math.round(2 * R * Math.asin(Math.min(1, Math.sqrt(h))));
+  }
+  function bearing(a, b) {
+    const p1 = toLatLon(a), p2 = toLatLon(b);
+    if (!p1 || !p2) return null;
+    const dLon = rad(p2.lon - p1.lon);
+    const y = Math.sin(dLon) * Math.cos(rad(p2.lat));
+    const x = Math.cos(rad(p1.lat)) * Math.sin(rad(p2.lat)) -
+              Math.sin(rad(p1.lat)) * Math.cos(rad(p2.lat)) * Math.cos(dLon);
+    return Math.round((deg(Math.atan2(y, x)) + 360) % 360);
+  }
+  return { toLatLon, distanceKm, bearing };
+})();
+
+const Dupes = (() => {
+  const ADIF_MODE = { LSB: "SSB", USB: "SSB", CW: "CW", CWR: "CW", AM: "AM", FM: "FM", WFM: "FM", DIG: "DATA", PKT: "PKT" };
+  function key(call, hz, mode) {
+    return String(call || "").toUpperCase().trim() + "|" + Bands.adif(hz) + "|" + (ADIF_MODE[mode] || mode || "");
+  }
+  /* every prior contact that would count as the same one for award purposes */
+  function priors(call, hz, mode, exceptId) {
+    const k = key(call, hz, mode);
+    return App.qsos.filter(r => !r.archived && r.id !== exceptId && key(r.call, r.hz, r.mode) === k);
+  }
+  return { key, priors, ADIF_MODE };
+})();
+
+function parseAdif(text) {
+  const src = String(text || "");
+  const start = /<eoh>/i.test(src) ? src.split(/<eoh>/i)[1] : src;
+  const records = start.split(/<eor>/i);
+  const out = [];
+  for (const raw of records) {
+    if (!/</.test(raw)) continue;
+    const fields = {};
+    const re = /<([A-Za-z0-9_]+):(\d+)(?::[A-Za-z])?>/g;
+    let m;
+    while ((m = re.exec(raw)) !== null) {
+      const len = Number(m[2]);
+      fields[m[1].toUpperCase()] = raw.substr(m.index + m[0].length, len);
+      re.lastIndex = m.index + m[0].length + len;
+    }
+    if (!fields.CALL) continue;
+    const d = String(fields.QSO_DATE || "").replace(/\D/g, "");
+    const t = String(fields.TIME_ON || "").replace(/\D/g, "").padEnd(6, "0");
+    let utc = new Date().toISOString();
+    if (d.length === 8) {
+      utc = d.slice(0, 4) + "-" + d.slice(4, 6) + "-" + d.slice(6, 8) + "T" +
+            t.slice(0, 2) + ":" + t.slice(2, 4) + ":" + t.slice(4, 6) + ".000Z";
+      if (isNaN(Date.parse(utc))) utc = new Date().toISOString();
+    }
+    let hz = 0;
+    if (fields.FREQ) hz = Math.round(Number(fields.FREQ) * 1e6) || 0;
+    const adifMode = String(fields.MODE || "").toUpperCase();
+    let mode = "FM";
+    if (adifMode === "SSB") mode = hz && hz < 10000000 ? "LSB" : "USB";
+    else if (adifMode === "CW") mode = "CW";
+    else if (adifMode === "AM") mode = "AM";
+    else if (adifMode === "FM") mode = "FM";
+    else if (adifMode === "DATA" || adifMode === "RTTY" || adifMode === "FT8") mode = "DIG";
+    else if (adifMode === "PKT") mode = "PKT";
+    const rec = Schema.qso({
+      id: crypto.randomUUID(), utc, call: fields.CALL, hz, mode,
+      sent: fields.RST_SENT || "", rcvd: fields.RST_RCVD || "",
+      name: fields.NAME || "", qth: fields.QTH || "", grid: fields.GRIDSQUARE || "",
+      pwr: Number(fields.TX_PWR) || 0, note: fields.COMMENT || ""
+    });
+    if (rec) out.push(rec);
+  }
+  return out;
+}
+
+/* =====================================================================
+   v1.4  FIELD LAYER
+   Installable, screen stays awake through a long sweep, and a one hand
+   layout for the Helm when the viewport is narrow.
+   ===================================================================== */
+const Field = (() => {
+  let wakeLock = null;
+
+  async function holdScreen(on) {
+    try {
+      if (on) {
+        if (wakeLock || !navigator.wakeLock) return;
+        wakeLock = await navigator.wakeLock.request("screen");
+        wakeLock.addEventListener("release", () => { wakeLock = null; });
+      } else if (wakeLock) {
+        await wakeLock.release(); wakeLock = null;
+      }
+    } catch (e) { wakeLock = null; }
+  }
+
+  function iconDataUrl(size) {
+    const c = document.createElement("canvas");
+    c.width = c.height = size;
+    const g = c.getContext("2d");
+    if (!g) return null;
+    g.fillStyle = "#0b110d"; g.fillRect(0, 0, size, size);
+    g.strokeStyle = "#e8a33d"; g.lineWidth = Math.max(2, size / 32);
+    /* a halyard: a vertical line with a flag bent off it */
+    g.beginPath();
+    g.moveTo(size * 0.3, size * 0.14); g.lineTo(size * 0.3, size * 0.86); g.stroke();
+    g.beginPath();
+    g.moveTo(size * 0.3, size * 0.2); g.lineTo(size * 0.76, size * 0.33);
+    g.lineTo(size * 0.3, size * 0.46); g.closePath();
+    g.fillStyle = "#e8a33d"; g.fill();
+    g.strokeStyle = "#79e6a6";
+    g.beginPath();
+    g.moveTo(size * 0.3, size * 0.62); g.lineTo(size * 0.7, size * 0.62); g.stroke();
+    try { return c.toDataURL("image/png"); } catch (e) { return null; }
+  }
+
+  /* the manifest is built here rather than shipped beside the file, so
+     the instrument stays a single file and still installs when served */
+  function installManifest() {
+    const icon = (() => { try { return iconDataUrl(192); } catch (e) { return null; } })();
+
+    /* each step is guarded on its own, so a browser missing one API still
+       gets the rest rather than losing the lot */
+    try {
+      const meta = document.createElement("meta");
+      meta.name = "theme-color"; meta.content = "#0b110d";
+      document.head.appendChild(meta);
+    } catch (e) {}
+
+    try {
+      if (icon) {
+        const fav = document.createElement("link");
+        fav.rel = "icon"; fav.href = icon;
+        document.head.appendChild(fav);
+      }
+    } catch (e) {}
+
+    try {
+      if (!window.URL || typeof window.URL.createObjectURL !== "function") return;
+      const manifest = {
+        name: "Halyard " + FI, short_name: "Halyard",
+        description: "Control head for the Yaesu FT-897D",
+        start_url: ".", display: "standalone",
+        background_color: "#0b110d", theme_color: "#0b110d",
+        icons: icon ? [{ src: icon, sizes: "192x192", type: "image/png", purpose: "any" }] : []
+      };
+      const blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+      const tag = document.createElement("link");
+      tag.rel = "manifest";
+      tag.href = URL.createObjectURL(blob);
+      document.head.appendChild(tag);
+    } catch (e) { /* installing is a nicety, never a requirement */ }
+  }
+
+  /* a service worker cannot be registered from file://, and Halyard is
+     already entirely offline there, so this only runs when served */
+  function installWorker() {
+    if (!("serviceWorker" in navigator)) return;
+    if (location.protocol !== "http:" && location.protocol !== "https:") return;
+    try {
+      const src = "self.addEventListener('install',function(e){self.skipWaiting();});" +
+        "self.addEventListener('activate',function(e){e.waitUntil(self.clients.claim());});" +
+        "self.addEventListener('fetch',function(e){e.respondWith(" +
+        "caches.open('halyard').then(function(c){return c.match(e.request).then(function(hit){" +
+        "return hit||fetch(e.request).then(function(res){if(e.request.method==='GET'&&res.ok)c.put(e.request,res.clone());return res;})" +
+        ".catch(function(){return hit;});});}));});";
+      const url = URL.createObjectURL(new Blob([src], { type: "text/javascript" }));
+      navigator.serviceWorker.register(url).catch(() => {});
+    } catch (e) { /* nothing here is load bearing */ }
+  }
+
+  function applyCompact() {
+    const narrow = window.innerWidth < 560;
+    document.body.classList.toggle("compact", narrow);
+  }
+
+  function start() {
+    installManifest();
+    installWorker();
+    applyCompact();
+    window.addEventListener("resize", applyCompact);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && App.sweeping) holdScreen(true);
+    });
+  }
+  return { start, holdScreen, iconDataUrl, applyCompact };
+})();
+
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+else boot();
+</script>
+</body>
+</html>
