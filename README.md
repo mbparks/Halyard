@@ -10,7 +10,7 @@ the radio's front panel in a browser window, builds a bandscope by sweeping the
 S-meter, keeps a channel locker and a contact log, and includes a virtual
 FT-897D so all of it can be exercised with no cable attached.
 
-Version 1.11.1. GPL-3.0.
+Version 1.11.2. GPL-3.0.
 
 ---
 

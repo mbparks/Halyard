@@ -60,3 +60,13 @@ jobs:
             echo "Found innerHTML, eval, or new Function."
             exit 1
           fi
+
+      - name: The Pages config and the worker config must not share a name
+        run: |
+          root=$(grep -oP '(?<=^name = ")[^"]+' wrangler.toml)
+          wk=$(grep -oP '(?<=^name = ")[^"]+' worker/wrangler.toml)
+          echo "pages: $root   worker: $wk"
+          if [ "$root" = "$wk" ]; then
+            echo "Both wrangler.toml files claim the name '$root'. They would fight over the same hostname."
+            exit 1
+          fi

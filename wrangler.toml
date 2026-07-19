@@ -1,5 +1,15 @@
-# Optional. Only needed if this repo is deployed as a Cloudflare Pages project.
-# The name must match the Pages project name exactly.
+# ---------------------------------------------------------------------------
+# This is the Cloudflare PAGES config for publishing Halyard itself as a static
+# site. It is optional, and it is NOT the solar proxy.
+#
+# Running `wrangler deploy` in this directory publishes the whole repository as
+# static assets under the name below. That is almost certainly not what you
+# want, and it is a easy mistake to make because both configs are called
+# wrangler.toml.
+#
+# The solar proxy lives in worker/ and deploys separately:
+#     cd worker && npx wrangler deploy
+# ---------------------------------------------------------------------------
 name = "halyard"
 compatibility_date = "2026-07-18"
 

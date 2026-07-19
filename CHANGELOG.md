@@ -2,6 +2,21 @@
 
 All notable changes to Halyard (FI-119).
 
+## 1.11.2
+
+- **The solar proxy is named `halyard-solar` again, and the optional Pages
+  config in the repository root keeps `halyard`.** Briefly they shared a name,
+  which meant a deploy from either directory could overwrite the other at the
+  same hostname. A CI check now fails the build if the two ever match again.
+- Both `wrangler.toml` files open with a comment saying which is which and how
+  to deploy each. Two files with the same name doing different jobs is a trap,
+  and the fix is to label them, not to expect people to remember.
+- The worker README explains how to spot and undo an accidental deploy of the
+  repository root, which publishes the whole repository as static assets and
+  answers `/` with an empty 404.
+- The 404 message in the Chart station now names that specific mistake rather
+  than pointing vaguely at `wrangler.toml`.
+
 ## 1.11.1
 
 - The worker now deploys as `halyard` rather than `halyard-solar`, and sets

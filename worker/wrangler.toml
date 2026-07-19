@@ -1,10 +1,17 @@
-name = "halyard"
+# ---------------------------------------------------------------------------
+# This is the SOLAR PROXY worker. Deploy it from this directory:
+#     cd worker && npx wrangler deploy
+#
+# The name here must not collide with the Pages project name in the repository
+# root wrangler.toml, or the two will fight over the same hostname.
+# ---------------------------------------------------------------------------
+name = "halyard-solar"
 main = "solar-proxy.js"
 compatibility_date = "2026-07-18"
 
-# Publish on the workers.dev subdomain. Without this the deploy can succeed
-# while nothing answers at the hostname, which shows up as a 404 from
-# Cloudflare rather than any response from the worker itself.
+# Publish on the workers.dev subdomain. Without this a deploy can succeed while
+# nothing answers at the hostname, which shows up as a 404 from Cloudflare
+# rather than any response from the worker itself.
 workers_dev = true
 
 # No KV, no D1, no secrets. This worker does one thing: fetch a public XML

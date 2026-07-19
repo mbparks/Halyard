@@ -791,9 +791,9 @@ $("solUrl").value = "https://missing.example.workers.dev/";
 $("solUrl").dispatchEvent(new w.Event("change"));
 $("btnSolFetch").click();
 await new Promise(r => setTimeout(r, 400));
-check("a 404 says nothing is deployed there rather than echoing the status",
-  $("toast").textContent.includes("Nothing is deployed"), $("toast").textContent.slice(0, 130));
-check("and names where to look", $("toast").textContent.includes("wrangler.toml"));
+check("a 404 says the host answered, not the proxy",
+  $("toast").textContent.includes("proxy never returns a 404"), $("toast").textContent.slice(0, 160));
+check("and names the usual cause", $("toast").textContent.includes("worker directory"));
 
 // clearing the address switches the whole thing off again
 $("solUrl").value = "";

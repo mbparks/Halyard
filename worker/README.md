@@ -10,9 +10,34 @@ This worker sits in front of the report and adds the missing header.
 
 ## Deploy
 
+Deploy from **this directory**, not from the repository root:
+
 ```
 cd worker
 npx wrangler deploy
+```
+
+There are two `wrangler.toml` files in this repository and they do completely
+different things. The one in the root is an optional Cloudflare Pages config
+that publishes Halyard itself as a static site. The one here is the solar proxy.
+Running `wrangler deploy` from the root deploys the wrong one.
+
+### If you already deployed the wrong one
+
+The symptom is a 404 with an empty body at `<pages-name>.workers.dev`, because
+the root config serves the repository as static assets and there is no
+`index.html` at the top of it. Confirm it by asking for a file that does exist:
+
+```
+curl -sI https://<that-host>/halyard.html
+```
+
+A 200 there means you published the repository, not the proxy. Note that this
+also puts the whole repository on the public internet, which is harmless for GPL
+source but probably not what you intended. Remove it with:
+
+```
+npx wrangler delete --name <that-name>
 ```
 
 Wrangler prints a URL. Use the one it prints, not one you expect: the hostname
