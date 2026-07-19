@@ -721,6 +721,11 @@ w.fetch = async (url) => {
   if (String(url).includes("broken")) throw new TypeError("Failed to fetch");
   if (String(url).includes("notxml")) return { ok: true, status: 200, text: async () => "<html>hi</html>" };
   if (String(url).includes("missing")) return { ok: false, status: 404, statusText: "Not Found", text: async () => "" };
+  if (String(url).includes("alien")) return { ok: true, status: 200, text: async () =>
+    '<?xml version="1.0"?><solar><solardata><solarflux>140</solarflux><aindex>5</aindex>' +
+    '<kindex>1</kindex><calculatedconditions>' +
+    '<band name="LF-MF" time="day">Good</band><band name="HF-low" time="day">Fair</band>' +
+    '</calculatedconditions></solardata></solar>' };
   return { ok: true, status: 200, statusText: "OK", text: async () => SAMPLE };
 };
 
@@ -784,6 +789,34 @@ $("btnSolFetch").click();
 await new Promise(r => setTimeout(r, 400));
 check("a page that is not a solar report is rejected",
   $("toast").textContent.includes("not a HamQSL solar report"), $("toast").textContent.slice(0, 120));
+
+// a feed whose band groups Halyard does not know must say so loudly, rather
+// than showing an unrated map that looks like bad propagation
+G.Store.set("solarTriedAt", 0);
+$("solUrl").value = "https://alien.example.workers.dev/";
+$("solUrl").dispatchEvent(new w.Event("change"));
+$("btnSolFetch").click();
+await new Promise(r => setTimeout(r, 400));
+check("the indices still arrive from an unfamiliar report", G.SolarFeed.stored().sfi === 140);
+check("a report whose groups are all unrecognised raises a warning",
+  !$("solWarn").classList.contains("hide"));
+check("the warning names the groups the feed actually used",
+  $("solWarn").textContent.includes("LF-MF") && $("solWarn").textContent.includes("HF-low"),
+  $("solWarn").textContent.slice(0, 150));
+check("and says plainly that no band got a rating",
+  $("solWarn").textContent.includes("no band on the map got a rating"));
+check("no band row claims a reported rating in that case",
+  !Array.from($("bandMap").children).some(r => /reported/.test(r.querySelector(".bchar").textContent)));
+
+// a recognised report clears the warning again
+G.Store.set("solarTriedAt", 0);
+$("solUrl").value = "https://halyard-solar.example.workers.dev/";
+$("solUrl").dispatchEvent(new w.Event("change"));
+$("btnSolFetch").click();
+await new Promise(r => setTimeout(r, 400));
+check("a report Halyard understands clears the warning", $("solWarn").classList.contains("hide"));
+check("and reports how many bands it rated",
+  $("solExtra").textContent.includes("rated"), $("solExtra").textContent.slice(0, 100));
 
 // a 404 must point at the deployment, not at the proxy
 G.Store.set("solarTriedAt", 0);

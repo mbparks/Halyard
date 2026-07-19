@@ -10,7 +10,7 @@ the radio's front panel in a browser window, builds a bandscope by sweeping the
 S-meter, keeps a channel locker and a contact log, and includes a virtual
 FT-897D so all of it can be exercised with no cable attached.
 
-Version 1.11.2. GPL-3.0.
+Version 1.12.0. GPL-3.0.
 
 ---
 
@@ -160,6 +160,13 @@ came out of published documentation, which for this radio contradicts itself.
   `worker/` re-serves the report with the header set and a fifteen minute edge
   cache. Halyard will not fetch more than once every fifteen minutes no matter
   how often you press the button.
+- **The band group names in the parser are an assumption.** HamQSL labels its
+  ratings by band pair, and Halyard maps those labels onto the bands on its map.
+  If those labels ever change, or were never quite what Halyard expects, the
+  indices will still be right while no band gets a rating. Rather than let that
+  look like poor propagation, the Chart station says how many bands it rated and
+  names any group label it did not recognise. If you see that warning, send the
+  labels it lists and the map can be corrected.
 - **A fetched report is still not a forecast.** HamQSL rates bands in pairs, so
   one rating covers more than one band on the map, and where two groups disagree
   Halyard keeps the worse of the two. Unrated bands fall back to a rule of thumb
@@ -203,7 +210,7 @@ came out of published documentation, which for this radio contradicts itself.
 ## Testing
 
 Halyard carries its own test suite. Open the Bench station and press **Run self
-test**: 338 assertions covering BCD encoding, every command encoder, the status
+test**: 349 assertions covering BCD encoding, every command encoder, the status
 byte decoders and their inversions, schema validation of imported data, ADIF in
 and out, CSV round trips, the virtual radio's protocol behaviour, fault
 injection, link queue ordering, provenance tracking, the constants layer, band
@@ -219,7 +226,7 @@ npm test
 ```
 
 `tests/selftest.mjs` runs the in-app suite under jsdom. `tests/integration.mjs`
-drives the real UI, 236 further checks covering connection, panel apply,
+drives the real UI, 243 further checks covering connection, panel apply,
 read-back, sweeps, markers, harvesting, trials, ADIF round trips, export
 contents, digit tuning by pointer and by keyboard, dial turns and flicks, band
 selection, and clean disconnect. Both must pass before a release.

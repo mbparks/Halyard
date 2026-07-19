@@ -11,7 +11,7 @@ gate a release.
     npm install
     npm test
 
-`selftest.mjs` loads the app under jsdom and calls the in-app suite. 338
+`selftest.mjs` loads the app under jsdom and calls the in-app suite. 349
 assertions.
 
 `integration.mjs` drives the real user interface: connecting to the virtual
@@ -21,7 +21,7 @@ finds a planted signal and restores the original frequency, placing markers,
 harvesting peaks, running trials end to end and abandoning one partway,
 importing and re-importing ADIF, tuning individual digits by pointer, focus, and
 scroll wheel, turning and flicking the dial, choosing bands, and checking what
-the export actually contains. 236 checks.
+the export actually contains. 243 checks.
 
 ## Why the stubs
 

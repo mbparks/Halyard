@@ -2,6 +2,26 @@
 
 All notable changes to Halyard (FI-119).
 
+## 1.12.0
+
+Making a wrong assumption in the solar parser look like a wrong assumption.
+
+- The band group labels HamQSL uses are the part of the parser most likely to be
+  wrong, because they were written from knowledge of the schema rather than from
+  the live document. If they do not match, the flux and indices still arrive
+  while every band on the map goes unrated, which reads exactly like poor
+  propagation. That is the worst kind of bug: silent, and wearing a plausible
+  disguise.
+- Group lookup is now tolerant of case and spacing, so `80M-40M` and
+  `30m - 20m` match.
+- Anything still unrecognised is carried out of the parser rather than dropped.
+  The Chart station reports how many bands it rated, and raises a warning strip
+  naming the exact group labels it did not understand. If none matched at all it
+  says so outright.
+- Eleven new assertions cover tolerant matching, unrecognised groups, a report
+  where nothing matches, and the honesty of the rated count that drives the
+  warning.
+
 ## 1.11.2
 
 - **The solar proxy is named `halyard-solar` again, and the optional Pages
