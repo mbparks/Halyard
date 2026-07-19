@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- HALYARD :: FI-119 :: halyard.html :: v1.11.0 -->
+<!-- HALYARD :: FI-119 :: halyard.html :: v1.10.0 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -289,9 +289,6 @@ body.transmitting .w-index{fill:var(--tx)}
 .bs.none{background:repeating-linear-gradient(45deg,var(--rule) 0 3px,transparent 3px 6px)}
 .bs.here{width:2px;background:var(--tx);box-shadow:0 0 6px var(--tx);z-index:2}
 .bs.noise{border-top:2px solid var(--focus);opacity:.9}
-.bchar.rate-good{color:var(--trace)}
-.bchar.rate-fair{color:var(--warn)}
-.bchar.rate-poor{color:var(--tx)}
 .key{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;color:var(--dim)}
 .key i{width:14px;height:10px;border-radius:2px;display:inline-block;border:1px solid var(--rule)}
 .key i.k-cw{background:var(--trace)} .key i.k-phone{background:var(--lamp)}
@@ -634,30 +631,21 @@ body.compact .linkbar{gap:6px}
         <div class="mono" id="chartClock" style="font-size:1.05rem;margin-top:4px">--</div>
         <div class="tiny" id="chartSun" style="margin-top:3px">--</div>
       </div>
-      <div class="stack" style="gap:8px;align-items:flex-end">
-        <div class="row" style="gap:8px;align-items:flex-end">
-          <label class="field" style="max-width:88px"><span>SFI</span><input type="number" id="solSfi" class="micro" min="60" max="400"></label>
-          <label class="field" style="max-width:80px"><span>A index</span><input type="number" id="solA" class="micro" min="0" max="400"></label>
-          <label class="field" style="max-width:80px"><span>K index</span><input type="number" id="solK" class="micro" min="0" max="9"></label>
-          <button id="btnSolSave" class="slim" type="button">Record by hand</button>
-        </div>
-        <div class="row" style="gap:8px;align-items:flex-end">
-          <label class="field" style="min-width:280px"><span>Solar feed address (optional)</span>
-            <input type="text" id="solUrl" class="micro" placeholder="paste your worker address here" spellcheck="false"></label>
-          <button id="btnSolFetch" class="slim" type="button">Fetch now</button>
-          <label class="check"><input type="checkbox" id="solAuto"><span class="tiny">Auto</span></label>
-        </div>
+      <div class="row" style="gap:8px;align-items:flex-end">
+        <label class="field" style="max-width:88px"><span>SFI</span><input type="number" id="solSfi" class="micro" min="60" max="400"></label>
+        <label class="field" style="max-width:80px"><span>A index</span><input type="number" id="solA" class="micro" min="0" max="400"></label>
+        <label class="field" style="max-width:80px"><span>K index</span><input type="number" id="solK" class="micro" min="0" max="9"></label>
+        <button id="btnSolSave" class="slim" type="button">Record</button>
       </div>
     </div>
     <div class="row" style="margin-top:10px;gap:10px">
       <span class="prov" id="solAge">no solar numbers recorded</span>
-      <span class="tiny" id="solExtra"></span>
       <span class="grow"></span>
       <span class="tiny" id="chartGrid"></span>
     </div>
   </div>
 
-  <div class="notice">Everything on this station is labelled with where it came from. <b>Measured</b> is what your own bandscope sweeps found. <b>Computed</b> is arithmetic from your grid square and the clock. <b>Entered</b> is what you typed in by hand. <b>Fetched</b> is a solar report pulled from an address you supply, which is the only thing in Halyard that ever touches the network, is off until you fill that box in, and never has to work for the rest of the instrument to. The day and night labels are a rule of thumb about when bands tend to work, not a forecast.</div>
+  <div class="notice">Halyard runs from disk with no network, so it cannot fetch a solar report. Everything here comes from one of three places, and each is labelled. <b>Measured</b> is what your own bandscope sweeps found. <b>Computed</b> is arithmetic from your grid square and the clock. <b>Entered</b> is what you typed in above after looking it up somewhere else, and it goes stale on screen so you know when to look again. Nothing here is a forecast.</div>
 
   <div class="panel">
     <div class="row" style="justify-content:space-between">
@@ -890,7 +878,7 @@ body.compact .linkbar{gap:6px}
    GPL-3.0
    ===================================================================== */
 
-const VERSION = "1.11.0";
+const VERSION = "1.10.0";
 const FI = "FI-119";
 const NS = "halyard.v1";
 
@@ -3274,124 +3262,6 @@ const SelfTest = (() => {
         const none = Chart.solar() === null; if (saved) Store.set("solar", saved); else Store.set("solar", null);
         return none; })());
 
-    /* --- v1.11 solar feed --- */
-    /* A fresh copy must reach for nothing. This is the property that keeps the
-       run from disk rule true, so it is asserted rather than assumed. */
-    {
-      const savedUrl = Store.get("solarUrl", "");
-      Store.set("solarUrl", "");
-      eq("no feed address is compiled in", SolarFeed.url(), "");
-      let refused = false;
-      try { await SolarFeed.fetchNow(true); } catch (e) { refused = /Set a feed address/.test(e.message); }
-      ok("with no address configured the feed refuses to fetch anything", refused);
-      /* any scheme that is not https must be refused. Written without a
-         literal http address so this file stays free of URLs entirely. */
-      Store.set("solarUrl", "ftp://example.invalid/solar");
-      let insecure = false;
-      try { await SolarFeed.fetchNow(true); } catch (e) { insecure = /https/.test(e.message); }
-      ok("an address that is not https is refused", insecure);
-      Store.set("solarUrl", savedUrl);
-    }
-
-    /* the parser, against the shape HamQSL actually publishes */
-    {
-      const sample = [
-        '<?xml version="1.0"?>',
-        '<solar><solardata>',
-        '<source>N0NBH</source>',
-        '<updated>18 Jul 2026 1800 GMT</updated>',
-        '<solarflux>142</solarflux><aindex>7</aindex><kindex>2</kindex>',
-        '<sunspots>96</sunspots><xray>B7.8</xray><heliumline>139.7</heliumline>',
-        '<aurora>3</aurora><geomagfield>QUIET</geomagfield><signalnoise>S0-S1</signalnoise>',
-        '<calculatedconditions>',
-        '<band name="80m-40m" time="day">Fair</band>',
-        '<band name="30m-20m" time="day">Good</band>',
-        '<band name="17m-15m" time="day">Good</band>',
-        '<band name="12m-10m" time="day">Poor</band>',
-        '<band name="80m-40m" time="night">Good</band>',
-        '<band name="30m-20m" time="night">Fair</band>',
-        '<band name="17m-15m" time="night">Poor</band>',
-        '<band name="12m-10m" time="night">Poor</band>',
-        '</calculatedconditions>',
-        '<calculatedvhfconditions>',
-        '<phenomenon name="E-Skip" location="north_america">Band Closed</phenomenon>',
-        '</calculatedvhfconditions>',
-        '</solardata></solar>'
-      ].join("");
-      const r = SolarFeed.parse(sample);
-      eq("the parser reads the solar flux", r.sfi, 142);
-      eq("the parser reads the A index", r.a, 7);
-      eq("the parser reads the K index", r.k, 2);
-      eq("the parser reads the sunspot number", r.sunspots, 96);
-      eq("the parser reads the X-ray class", r.xray, "B7.8");
-      eq("the parser reads the geomagnetic field", r.geomag, "QUIET");
-      eq("the parser reads the report's own timestamp", r.updated, "18 Jul 2026 1800 GMT");
-      eq("the parser credits the source", r.source, "N0NBH");
-      eq("a band group is spread across the bands it covers", r.bands["40m"].day, "Fair");
-      eq("60 m is covered by the 80 to 40 group", r.bands["60m"].night, "Good");
-      eq("20 m picks up its daytime rating", r.bands["20m"].day, "Good");
-      eq("15 m picks up its night rating", r.bands["15m"].night, "Poor");
-      ok("VHF phenomena are carried through", Object.keys(r.vhf).length === 1);
-      ok("160 m is left blank because the feed does not rate it", r.bands["160m"] === undefined);
-
-      /* two groups can name the same band; the worse rating has to win, or the
-         chart would flatter a band that one of its halves says is poor */
-      const overlap = sample.replace('<band name="30m-20m" time="day">Good</band>',
-        '<band name="30m-20m" time="day">Good</band><band name="20m-17m" time="day">Poor</band>');
-      eq("where two groups disagree the worse rating is kept",
-        SolarFeed.parse(overlap).bands["20m"].day, "Poor");
-
-      /* nothing off the wire may become markup, and nonsense must be refused */
-      const nasty = sample.replace("<geomagfield>QUIET</geomagfield>",
-        "<geomagfield>&lt;img src=x onerror=alert(1)&gt;</geomagfield>");
-      const parsedNasty = SolarFeed.parse(nasty);
-      ok("markup in a feed value stays inert text",
-        parsedNasty.geomag.indexOf("<img") === 0 && parsedNasty.geomag.length <= 24);
-      const wild = sample.replace("<kindex>2</kindex>", "<kindex>999</kindex>");
-      eq("an out of range index is clamped rather than trusted", SolarFeed.parse(wild).k, 9);
-      throws("a page that is not a solar report is rejected",
-        () => SolarFeed.parse("<html><body>Login required</body></html>"));
-      throws("malformed XML is rejected", () => SolarFeed.parse("<solar><unclosed>"));
-    }
-
-    /* fetched and hand entered numbers coexist, and the fresher one is used */
-    {
-      const savedFeed = Store.get("solarFeed", null), savedManual = Store.get("solar", null);
-      Store.set("solarFeed", null); Store.set("solar", null);
-      ok("with neither source there is nothing to show", SolarFeed.best() === null);
-      Store.set("solar", { sfi: 100, a: 1, k: 1, when: new Date(Date.now() - 7200000).toISOString() });
-      eq("with only hand entered numbers those are used", SolarFeed.best().kind, "entered");
-      Store.set("solarFeed", { sfi: 142, a: 7, k: 2, bands: {}, at: new Date().toISOString() });
-      eq("a fresher fetched report wins", SolarFeed.best().kind, "fetched");
-      Store.set("solar", { sfi: 100, a: 1, k: 1, when: new Date(Date.now() + 60000).toISOString() });
-      eq("but a newer hand entry wins over an older fetch", SolarFeed.best().kind, "entered");
-      Store.set("solarFeed", savedFeed); Store.set("solar", savedManual);
-    }
-
-    ok("a band rating is only reported when the feed actually carried one",
-      (() => {
-        const saved = Store.get("solarFeed", null);
-        Store.set("solarFeed", { sfi: 1, a: 1, k: 1, at: new Date().toISOString(),
-          bands: { "20m": { day: "Good" } } });
-        const good = SolarFeed.bandRating("20m", "day") === "Good" &&
-          SolarFeed.bandRating("20m", "night") === null &&
-          SolarFeed.bandRating("160m", "day") === null;
-        Store.set("solarFeed", saved);
-        return good;
-      })());
-
-    ok("a failed fetch does not start the politeness clock, so a bad address can be corrected at once",
-      (() => {
-        const savedTried = Store.get("solarTriedAt", 0), savedUrl = Store.get("solarUrl", "");
-        Store.set("solarTriedAt", 0);
-        Store.set("solarUrl", "");
-        let threw = false;
-        try { SolarFeed.fetchNow(false); } catch (e) { threw = true; }
-        const untouched = Number(Store.get("solarTriedAt", 0)) === 0;
-        Store.set("solarTriedAt", savedTried); Store.set("solarUrl", savedUrl);
-        return untouched;
-      })());
-
     /* --- rendering does not blow up --- */
     let drew = true;
     try { Scope.draw(null, null); } catch (e) { drew = false; }
@@ -3463,7 +3333,6 @@ function buildAbout() {
     "1.6.0  A knob you can actually turn, flick, and let coast, plus a band rack that drops the radio on the bottom edge of any band the FT-897D covers.",
     "1.7.0  Fixed a repeater offset leaking from the VHF bands onto HF, where CAT cannot read it back. Added a third provenance mark, staged, so Halyard stops claiming it sent things it never sent.",
     "1.8.0  Fixed the panel controls, which did nothing until Send to radio was pressed. Band buttons now land in the phone segment in a voice mode, with the edges following your licence class.",
-    "1.11.0  The Chart can now pull a HamQSL solar report from an address you supply. Nothing is compiled in, so a fresh copy still makes no network requests at all.",
     "1.10.0  New Chart station: a band map showing what every band is and which parts your licence class may use, plus the conditions that can honestly be known without a network.",
     "1.9.0  The Helm rebuilt as one instrument face. Readout, meters, and lamps together at the top, knob and controls beside each other, and everything occasional moved into drawers that summarise themselves."
   ]) vl.appendChild(el("li", { text: t }));
@@ -3550,7 +3419,7 @@ function showStation(id) {
   }
   Store.set("station", id);
   if (id === "scope") Scope.draw(null, null);
-  if (id === "chart") { Chart.render(); Chart.maybeAutoFetch(); }
+  if (id === "chart") Chart.render();
 }
 
 function centreOfView() {
@@ -3684,17 +3553,6 @@ function wire() {
   }
   /* chart */
   $("btnSolSave").addEventListener("click", () => Chart.saveSolar());
-  $("btnSolFetch").addEventListener("click", () => Chart.fetchFeed(false));
-  $("solUrl").addEventListener("change", () => {
-    const u = $("solUrl").value.trim();
-    if (u && !/^https:\/\//i.test(u)) { toast("The feed address has to be https", true); return; }
-    SolarFeed.setUrl(u);
-    toast(u ? "Solar feed address saved" : "Solar feed switched off");
-  });
-  $("solAuto").addEventListener("change", () => {
-    SolarFeed.setAuto($("solAuto").checked);
-    if ($("solAuto").checked) Chart.maybeAutoFetch();
-  });
   $("chartMine").addEventListener("change", () => Chart.renderMap());
 
   $("btnSelfTest").addEventListener("click", runSelfTest);
@@ -5377,36 +5235,20 @@ const Chart = (() => {
       $("chartGrid").textContent = "computed for " + g;
     }
 
-    const pick = SolarFeed.best();
+    const sol = solar();
     const chip = $("solAge");
-    const extra = $("solExtra");
-    extra.textContent = "";
-    if (!pick) {
+    if (!sol) {
       chip.className = "prov staged";
-      chip.textContent = "no solar numbers yet";
+      chip.textContent = "no solar numbers recorded";
     } else {
-      const r = pick.r;
-      const hours = pick.kind === "fetched" ? r.hours : r.hours;
-      const stale = hours > 12;
-      const ago = hours < 1 ? Math.round(hours * 60) + " minutes ago" : Math.round(hours) + " hours ago";
+      const stale = sol.hours > 12;
       chip.className = "prov " + (stale ? "asserted" : "confirmed");
-      chip.textContent = "SFI " + r.sfi + ", A " + r.a + ", K " + r.k + ", " +
-        (pick.kind === "fetched" ? "fetched " : "entered ") + ago +
-        (stale ? ", worth refreshing" : "");
-      if (pick.kind === "fetched") {
-        extra.textContent = [
-          r.sunspots !== null ? r.sunspots + " sunspots" : null,
-          r.xray ? "X-ray " + r.xray : null,
-          r.geomag ? "field " + r.geomag.toLowerCase() : null,
-          r.noise ? "noise " + r.noise : null,
-          r.updated ? "report stamped " + r.updated : null,
-          r.source ? "via " + r.source : null
-        ].filter(Boolean).join(",  ");
-      }
-      $("solSfi").value = r.sfi; $("solA").value = r.a; $("solK").value = r.k;
+      chip.textContent = "SFI " + sol.sfi + ", A " + sol.a + ", K " + sol.k + ", entered " +
+        (sol.hours < 1 ? Math.round(sol.hours * 60) + " minutes ago"
+                       : Math.round(sol.hours) + " hours ago") +
+        (stale ? ", go and look it up again" : "");
+      $("solSfi").value = sol.sfi; $("solA").value = sol.a; $("solK").value = sol.k;
     }
-    $("solUrl").value = SolarFeed.url();
-    $("solAuto").checked = SolarFeed.auto();
     $("chartLic").textContent = LICENCE_CLASSES.find(c => c.id === licence()).name;
   }
 
@@ -5461,39 +5303,22 @@ const Chart = (() => {
       }, [
         el("span", { class: "bname", text: b.name }),
         bar,
-        el("span", { class: "bchar " + favourClass(b), text: mine ? favourLabel(b) : "no privileges" })
+        el("span", { class: "bchar", text: mine ? favourLabel(b) : "no privileges" })
       ]);
       map.appendChild(row);
     }
   }
 
-  function phaseNow() {
+  /* a rule of thumb about when a band tends to work, not a prediction */
+  function favourLabel(b) {
     const g = grid();
     const at = g ? Grid.toLatLon(g) : null;
-    if (!at) return null;
-    return Sun.state(new Date(), at.lat, at.lon);
-  }
-
-  /* A fetched rating is real reported data and beats the rule of thumb, so it
-     is shown instead and marked as fetched. Without one, the rule of thumb is
-     all there is, and it says so. */
-  function favourLabel(b) {
-    const st = phaseNow();
-    const rating = st ? SolarFeed.bandRating(b.id, st.phase) : null;
-    if (rating) return rating.toLowerCase() + " now, reported";
-    if (!st) return b.favours === "local" ? "local" : b.favours;
+    if (!at) return b.favours === "local" ? "local" : b.favours;
+    const st = Sun.state(new Date(), at.lat, at.lon);
     if (b.favours === "local") return "local";
     if (b.favours === "both") return "day and night";
     const good = (b.favours === "day" && st.phase === "day") || (b.favours === "night" && st.phase === "night");
     return (good ? "favoured now" : b.favours + " band") + (st.grayline ? ", grey line" : "");
-  }
-  function favourClass(b) {
-    const st = phaseNow();
-    const rating = st ? SolarFeed.bandRating(b.id, st.phase) : null;
-    if (rating === "Good") return "rate-good";
-    if (rating === "Fair") return "rate-fair";
-    if (rating === "Poor") return "rate-poor";
-    return "";
   }
 
   function renderDetail() {
@@ -5544,17 +5369,6 @@ const Chart = (() => {
       box.appendChild(row);
     }
 
-    const feed = SolarFeed.stored();
-    if (feed && feed.bands && feed.bands[b.id]) {
-      box.appendChild(el("div", { class: "legend", style: "margin-top:14px", text: "Reported conditions" }));
-      const d = feed.bands[b.id].day, n = feed.bands[b.id].night;
-      box.appendChild(el("p", { class: "tiny", style: "margin:6px 0 0", text:
-        "By day " + (d || "not reported") + ", by night " + (n || "not reported") +
-        ". From the feed you configured, fetched " +
-        (feed.hours < 1 ? Math.round(feed.hours * 60) + " minutes ago" : Math.round(feed.hours) + " hours ago") +
-        ". HamQSL rates bands in pairs, so this covers a wider range than this one band." }));
-    }
-
     const m = measured(b);
     box.appendChild(el("div", { class: "legend", style: "margin-top:14px", text: "What you have measured here" }));
     box.appendChild(el("p", { class: "tiny", style: "margin:6px 0 0", text: m
@@ -5575,29 +5389,6 @@ const Chart = (() => {
     toast("Solar numbers recorded, stamped with the time you entered them");
   }
 
-  async function fetchFeed(force) {
-    const btn = $("btnSolFetch");
-    if (btn) { btn.disabled = true; btn.textContent = "Fetching"; }
-    try {
-      await SolarFeed.fetchNow(force);
-      render();
-      toast("Solar report fetched");
-    } catch (e) {
-      toast(e.message || String(e), true);
-    } finally {
-      if (btn) { btn.disabled = false; btn.textContent = "Fetch now"; }
-    }
-  }
-
-  /* only ever on a station the operator has opened, and only if they asked */
-  async function maybeAutoFetch() {
-    if (!SolarFeed.auto() || !SolarFeed.url()) return;
-    const have = SolarFeed.stored();
-    if (have && have.hours < 1) return;
-    if (Date.now() - SolarFeed.lastAttempt() < SolarFeed.MIN_GAP_MS) return;
-    try { await SolarFeed.fetchNow(false); render(); } catch (e) { /* stay quiet on a background try */ }
-  }
-
   function render() { renderConditions(); renderMap(); renderDetail(); }
 
   function start() {
@@ -5606,162 +5397,8 @@ const Chart = (() => {
   }
 
   return { render, renderMap, renderDetail, renderConditions, saveSolar, start, measured, solar,
-    fetchFeed, maybeAutoFetch,
     get selected() { return selected; }, set selected(v) { selected = v; },
     usable, classLo };
-})();
-
-
-/* =====================================================================
-   v1.11  SOLAR FEED
-   The one part of Halyard that can touch the network, and it is off
-   until you give it an address. No address is compiled in, so a fresh
-   copy makes no requests at all, and everything else works whether this
-   ever succeeds or not.
-
-   HamQSL serves the usual report as XML but sends no CORS headers, so a
-   browser will refuse to read it directly, especially from a file:// page
-   whose origin is null. The worker in worker/solar-proxy.js re-serves it
-   with the right headers and caches it at the edge. Point this at that.
-   ===================================================================== */
-const SolarFeed = (() => {
-  const MIN_GAP_MS = 15 * 60 * 1000;    // be polite to whoever is serving this
-  let inFlight = false;
-
-  function url() { return String(Store.get("solarUrl", "") || "").trim(); }
-  function setUrl(u) { Store.set("solarUrl", String(u || "").trim().slice(0, 300)); }
-  function auto() { return !!Store.get("solarAuto", false); }
-  function setAuto(v) { Store.set("solarAuto", !!v); }
-
-  const num = (v, lo, hi) => {
-    const n = Number(String(v).replace(/[^0-9.\-]/g, ""));
-    return Number.isFinite(n) ? clamp(n, lo, hi) : null;
-  };
-  const text = (v, max) => String(v === null || v === undefined ? "" : v).trim().slice(0, max || 40);
-
-  /* HamQSL groups bands in pairs, so one rating covers more than one of ours */
-  const GROUPS = {
-    "80m-40m": ["80m", "60m", "40m"],
-    "40m-30m": ["40m", "30m"],
-    "30m-20m": ["30m", "20m"],
-    "20m-17m": ["20m", "17m"],
-    "17m-15m": ["17m", "15m"],
-    "15m-12m": ["15m", "12m"],
-    "12m-10m": ["12m", "10m"],
-    "10m-6m":  ["10m", "6m"]
-  };
-
-  /* Parsed as inert text. Nothing from the wire is ever put into the DOM
-     as markup, and every number is clamped into a sane range. */
-  function parse(xmlText) {
-    if (typeof DOMParser === "undefined") throw new Error("This browser cannot parse XML");
-    const doc = new DOMParser().parseFromString(String(xmlText), "application/xml");
-    if (doc.getElementsByTagName("parsererror").length) throw new Error("The feed did not return valid XML");
-    const pick = (tag) => {
-      const n = doc.getElementsByTagName(tag)[0];
-      return n ? n.textContent : null;
-    };
-    if (pick("solarflux") === null && pick("sunspots") === null) {
-      throw new Error("That address answered, but it is not a HamQSL solar report");
-    }
-    const bands = {};
-    for (const el2 of Array.from(doc.getElementsByTagName("band"))) {
-      const name = text(el2.getAttribute("name"), 20);
-      const when = text(el2.getAttribute("time"), 10).toLowerCase();
-      const rating = text(el2.textContent, 20);
-      const ours = GROUPS[name];
-      if (!ours || (when !== "day" && when !== "night")) continue;
-      for (const id of ours) {
-        bands[id] = bands[id] || {};
-        /* a band named by two groups keeps the worse of the two ratings */
-        const rank = { "Good": 3, "Fair": 2, "Poor": 1 };
-        const had = bands[id][when];
-        if (!had || (rank[rating] || 0) < (rank[had] || 0)) bands[id][when] = rating;
-      }
-    }
-    const vhf = {};
-    for (const el2 of Array.from(doc.getElementsByTagName("phenomenon"))) {
-      const name = text(el2.getAttribute("name"), 30);
-      const loc = text(el2.getAttribute("location"), 30);
-      if (!name) continue;
-      vhf[name + (loc ? " " + loc : "")] = text(el2.textContent, 30);
-    }
-    return {
-      sfi: num(pick("solarflux"), 0, 400),
-      a: num(pick("aindex"), 0, 400),
-      k: num(pick("kindex"), 0, 9),
-      sunspots: num(pick("sunspots"), 0, 999),
-      xray: text(pick("xray"), 12),
-      geomag: text(pick("geomagfield"), 24),
-      noise: text(pick("signalnoise"), 16),
-      aurora: num(pick("aurora"), 0, 12),
-      updated: text(pick("updated"), 40),
-      source: text(pick("source"), 40),
-      bands, vhf
-    };
-  }
-
-  function stored() {
-    const r = Store.get("solarFeed", null);
-    if (!r || typeof r !== "object") return null;
-    const at = Date.parse(r.at);
-    if (!Number.isFinite(at)) return null;
-    return Object.assign({}, r, { at: new Date(at), hours: (Date.now() - at) / 3600000 });
-  }
-
-  function lastAttempt() { return Number(Store.get("solarTriedAt", 0)) || 0; }
-
-  async function fetchNow(force) {
-    const u = url();
-    if (!u) throw new Error("Set a feed address first. There is a Cloudflare Worker for this in the repository.");
-    if (!/^https:\/\//i.test(u)) throw new Error("The feed address has to be https");
-    if (inFlight) throw new Error("A fetch is already running");
-    const since = Date.now() - lastAttempt();
-    if (!force && since < MIN_GAP_MS) {
-      throw new Error("Last fetched " + Math.round(since / 60000) + " minutes ago. Solar numbers move slowly, so Halyard waits 15 minutes between fetches.");
-    }
-    if (typeof fetch !== "function") throw new Error("This browser has no fetch");
-
-    inFlight = true;
-    try {
-      const res = await fetch(u, { cache: "no-store", redirect: "follow" });
-      if (!res.ok) throw new Error("The feed answered " + res.status + " " + (res.statusText || ""));
-      const body = await res.text();
-      const data = parse(body);
-      const rec = Object.assign({}, data, { at: new Date().toISOString(), from: u });
-      Store.set("solarFeed", rec);
-      Store.set("solarTriedAt", Date.now());
-      return stored();
-    } catch (e) {
-      /* the failure everyone hits first deserves to be named properly */
-      const msg = String(e && e.message ? e.message : e);
-      if (/failed to fetch|networkerror|load failed/i.test(msg)) {
-        throw new Error("The browser blocked or could not reach that address. HamQSL sends no CORS headers, so it cannot be read directly; put the worker from worker/solar-proxy.js in front of it.");
-      }
-      throw e;
-    } finally {
-      inFlight = false;
-    }
-  }
-
-  /* whichever of the two sources is fresher wins, and it says which it was */
-  function best() {
-    const f = stored();
-    const m = Chart.solar();
-    if (f && m) return (f.at.valueOf() >= m.when.valueOf()) ? { kind: "fetched", r: f } : { kind: "entered", r: m };
-    if (f) return { kind: "fetched", r: f };
-    if (m) return { kind: "entered", r: m };
-    return null;
-  }
-
-  function bandRating(bandId, phase) {
-    const f = stored();
-    if (!f || !f.bands || !f.bands[bandId]) return null;
-    return f.bands[bandId][phase] || null;
-  }
-
-  return { url, setUrl, auto, setAuto, parse, stored, fetchNow, best, bandRating,
-    GROUPS, MIN_GAP_MS, lastAttempt };
 })();
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);

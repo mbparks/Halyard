@@ -1,0 +1,62 @@
+name: tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install harness dependencies
+        working-directory: tests
+        run: npm install
+
+      - name: Self test suite
+        working-directory: tests
+        run: npm run test:self
+
+      - name: Integration suite
+        working-directory: tests
+        run: npm run test:integration
+
+  conventions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: No em dashes or en dashes
+        run: |
+          if grep -rn -e '—' -e '–' --include='*.html' --include='*.md' .; then
+            echo "Found an em dash or en dash. Use commas, periods, or parentheses."
+            exit 1
+          fi
+
+      - name: Version marker present and matching
+        run: |
+          marker=$(grep -oP '(?<=:: v)[0-9]+\.[0-9]+\.[0-9]+' halyard.html | head -1)
+          insrc=$(grep -oP '(?<=const VERSION = ")[0-9]+\.[0-9]+\.[0-9]+' halyard.html | head -1)
+          echo "marker $marker, source $insrc"
+          test -n "$marker" && test "$marker" = "$insrc"
+
+      - name: Single file, no external requests
+        run: |
+          if grep -nP '<script[^>]+src=|<link[^>]+stylesheet|https?://(?!www\.w3\.org)' halyard.html; then
+            echo "halyard.html reaches outside itself. It must not."
+            exit 1
+          fi
+
+      - name: No innerHTML or eval
+        run: |
+          if grep -nP '\.innerHTML|[^a-zA-Z.]eval\(|new Function\(' halyard.html; then
+            echo "Found innerHTML, eval, or new Function."
+            exit 1
+          fi

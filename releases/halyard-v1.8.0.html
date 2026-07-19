@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- HALYARD :: FI-119 :: halyard.html :: v1.11.0 -->
+<!-- HALYARD :: FI-119 :: halyard.html :: v1.8.0 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -136,91 +136,11 @@ nav.stations button:hover{color:var(--ink)}
 .lamp.lit{color:var(--lamp)} .lamp.lit i{background:var(--lamp);box-shadow:0 0 7px var(--lamp)}
 .lamp.tx.lit{color:var(--tx)} .lamp.tx.lit i{background:var(--tx);box-shadow:0 0 8px var(--tx)}
 
-/* ---- the instrument face ---- */
-.face{
-  background:linear-gradient(180deg,var(--panel) 0%,var(--panel-2) 100%);
-  border:1px solid var(--rule-hi); border-radius:var(--r);
-  padding:12px 14px 10px; margin-bottom:var(--gap);
-}
-.face-top{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}
-.vfo{
-  display:flex;flex-direction:column;align-items:center;gap:1px;
-  min-height:0;padding:7px 12px;background:var(--sunk);border-color:var(--rule);
-}
-.vfo b{font-family:var(--f-num);font-size:1.3rem;color:var(--lamp);line-height:1;font-weight:600}
-.vfo .legend{font-size:.55rem;letter-spacing:.2em}
-.face-tags{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
-.tag{
-  font-family:var(--f-legend);text-transform:uppercase;letter-spacing:.14em;
-  font-size:.68rem;font-weight:600;color:var(--dim);
-  border:1px solid var(--rule-hi);border-radius:var(--r);padding:2px 9px;white-space:nowrap;
-}
-.tag.mode{color:var(--lamp);border-color:var(--lamp);background:var(--lamp-soft)}
-
-.face-meters{
-  display:grid;grid-template-columns:1fr 1fr;gap:10px 22px;
-  margin-top:12px;padding-top:10px;border-top:1px solid var(--rule);
-}
-.meterwrap{min-width:0}
-.scale{
-  display:flex;justify-content:space-between;font-family:var(--f-num);
-  font-size:.58rem;color:var(--faint);padding-left:26px;padding-right:5ch;margin-top:2px;
-}
-.lampstrip{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px;padding-left:26px}
-.warnstrip{
-  margin-top:10px;border:1px solid var(--tx);background:var(--tx-soft);color:var(--tx);
-  border-radius:var(--r);padding:7px 10px;font-size:.82rem;
-}
-
-/* ---- controls ---- */
-.controls{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;margin-bottom:var(--gap)}
-.ctrl-stack{display:flex;flex-direction:column;gap:10px;min-width:0}
-.ctrl-line{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
-.ctrl-line > .legend{flex:0 0 46px}
-.micro{min-height:34px;padding:5px 8px;width:auto}
-select.micro{max-width:150px}
-
-/* segmented controls: one press instead of a dropdown */
-.seg{display:flex;flex-wrap:wrap;gap:4px;flex:1 1 auto;min-width:0}
-.seg button{
-  min-height:34px;padding:5px 10px;font-size:.7rem;letter-spacing:.09em;
-  background:var(--sunk);border-color:var(--rule);
-}
-.seg button[aria-checked="true"],.seg button.on{
-  background:var(--lamp-soft);border-color:var(--lamp);color:var(--lamp);
-}
-.seg.bands button{padding:5px 8px;letter-spacing:.05em}
-.seg button:disabled{opacity:.28}
-
-.ptt{
-  min-height:58px;font-size:.95rem;letter-spacing:.24em;margin-top:2px;
-  border-color:var(--tx);color:var(--tx);
-}
-.ptt:hover:not(:disabled){background:var(--tx-soft);border-color:var(--tx);color:var(--tx)}
-.ptt.on{background:var(--tx);border-color:var(--tx);color:var(--bg)}
-
-/* ---- drawers ---- */
-details.drawer{
-  border:1px solid var(--rule);border-radius:var(--r);background:var(--panel);margin-bottom:8px;
-}
-details.drawer > summary{
-  display:flex;align-items:center;gap:10px;justify-content:space-between;
-  padding:10px 14px;cursor:pointer;list-style:none;min-height:44px;
-}
-details.drawer > summary::-webkit-details-marker{display:none}
-details.drawer > summary::after{
-  content:"+";font-family:var(--f-num);color:var(--dim);font-size:1rem;order:9;
-}
-details.drawer[open] > summary::after{content:"\2013"}
-details.drawer > summary:hover .legend{color:var(--lamp)}
-details.drawer[open] > summary{border-bottom:1px solid var(--rule)}
-.drawer-body{padding:14px}
-
 /* ---- the readout ---- */
 .readout{
   display:flex;align-items:baseline;justify-content:center;gap:6px;
-  padding:10px 8px 8px; background:var(--sunk);
-  border:1px solid var(--rule); border-radius:var(--r); min-width:0;
+  padding:16px 10px 10px; background:var(--sunk);
+  border:1px solid var(--rule); border-radius:var(--r);
 }
 .readout .hz{
   font-family:var(--f-num); font-variant-numeric:tabular-nums;
@@ -255,8 +175,7 @@ body.transmitting .readout .hz{color:var(--tx);text-shadow:0 0 18px var(--tx-sof
 .prov.staged{background:none;border-style:dotted;border-color:var(--faint);color:var(--faint)}
 
 /* ---- the dial ---- */
-.dialbox{flex:0 0 auto;width:clamp(132px,17vw,168px);text-align:center}
-#wheelStep{margin-top:6px}
+.dialbox{flex:0 0 auto;width:clamp(150px,22vw,190px)}
 #wheel{display:block;width:100%;height:auto;touch-action:none;cursor:grab}
 #wheel.turning{cursor:grabbing}
 #wheel:focus-visible{outline:2px solid var(--focus);outline-offset:3px;border-radius:50%}
@@ -271,34 +190,6 @@ body.transmitting .w-dimple{stroke:var(--tx)}
 body.transmitting .w-index{fill:var(--tx)}
 .bandbtn.on{background:var(--lamp-soft);border-color:var(--lamp);color:var(--lamp)}
 @media (prefers-reduced-motion:reduce){ #wheelRotor{transition:none} }
-
-/* ---- band map ---- */
-.bandmap{display:flex;flex-direction:column;gap:7px}
-.bmrow{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;cursor:pointer;
-  padding:3px 4px;border-radius:var(--r);border:1px solid transparent}
-.bmrow:hover{border-color:var(--rule-hi);background:var(--panel-2)}
-.bmrow.sel{border-color:var(--lamp);background:var(--lamp-soft)}
-.bmrow.dead{opacity:.35}
-.bmrow .bname{font-family:var(--f-legend);text-transform:uppercase;letter-spacing:.1em;
-  font-size:.72rem;font-weight:600;color:var(--ink)}
-.bmrow .bchar{font-family:var(--f-num);font-size:.62rem;color:var(--dim);white-space:nowrap}
-.bmbar{position:relative;height:20px;background:var(--sunk);border:1px solid var(--rule);border-radius:2px;overflow:hidden}
-.bs{position:absolute;top:0;bottom:0}
-.bs.cw{background:var(--trace);opacity:.75}
-.bs.phone{background:var(--lamp);opacity:.8}
-.bs.none{background:repeating-linear-gradient(45deg,var(--rule) 0 3px,transparent 3px 6px)}
-.bs.here{width:2px;background:var(--tx);box-shadow:0 0 6px var(--tx);z-index:2}
-.bs.noise{border-top:2px solid var(--focus);opacity:.9}
-.bchar.rate-good{color:var(--trace)}
-.bchar.rate-fair{color:var(--warn)}
-.bchar.rate-poor{color:var(--tx)}
-.key{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;color:var(--dim)}
-.key i{width:14px;height:10px;border-radius:2px;display:inline-block;border:1px solid var(--rule)}
-.key i.k-cw{background:var(--trace)} .key i.k-phone{background:var(--lamp)}
-.key i.k-none{background:repeating-linear-gradient(45deg,var(--rule) 0 3px,transparent 3px 6px)}
-.key i.k-here{background:var(--tx);width:3px}
-.segline{display:grid;grid-template-columns:1fr auto;gap:10px;padding:7px 0;border-bottom:1px solid var(--rule)}
-.segline:last-child{border-bottom:0}
 
 /* ---- meters ---- */
 .meter{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center}
@@ -353,14 +244,7 @@ dialog .dfoot{padding:12px 14px;border-top:1px solid var(--rule);display:flex;ga
 /* v1.4 one hand field layout: the readout and the transmit key come first */
 body.compact .wrap{padding-left:8px;padding-right:8px}
 body.compact .readout .hz{font-size:clamp(2.4rem,12vw,3.2rem)}
-body.compact .face-top{grid-template-columns:auto 1fr;grid-template-areas:"vfo readout" "tags tags";row-gap:8px}
-body.compact .vfo{grid-area:vfo}
-body.compact .readout{grid-area:readout}
-body.compact .face-tags{grid-area:tags;flex-direction:row;justify-content:flex-start}
-body.compact .face-meters{grid-template-columns:1fr}
-body.compact .controls{grid-template-columns:1fr}
-body.compact .dialbox{width:min(180px,55vw);margin:0 auto}
-body.compact .ctrl-line > .legend{flex:1 1 100%}
+body.compact #st-helm .panel:first-child .row:nth-of-type(2){flex-direction:column;align-items:stretch}
 body.compact #btnPtt{width:100%;min-height:64px;font-size:1rem;order:99}
 body.compact .grid{grid-template-columns:1fr !important}
 body.compact nav.stations button{flex:1 1 33%}
@@ -421,7 +305,6 @@ body.compact .linkbar{gap:6px}
 <nav class="stations" role="tablist" aria-label="Stations">
   <button role="tab" id="tab-helm" aria-controls="st-helm" aria-selected="true" type="button">Helm</button>
   <button role="tab" id="tab-scope" aria-controls="st-scope" aria-selected="false" type="button">Bandscope</button>
-  <button role="tab" id="tab-chart" aria-controls="st-chart" aria-selected="false" type="button">Chart</button>
   <button role="tab" id="tab-locker" aria-controls="st-locker" aria-selected="false" type="button">Locker</button>
   <button role="tab" id="tab-log" aria-controls="st-log" aria-selected="false" type="button">Log</button>
   <button role="tab" id="tab-trials" aria-controls="st-trials" aria-selected="false" type="button">Trials</button>
@@ -430,144 +313,130 @@ body.compact .linkbar{gap:6px}
 
 <section id="st-helm" role="tabpanel" aria-labelledby="tab-helm">
 
-  <!-- the instrument face: everything you glance at, in one place -->
-  <div class="face">
-    <div class="face-top">
-      <button id="btnVfo" class="vfo" type="button" title="Swap VFO A and B">
-        <span class="legend">VFO</span><b id="vfoLetter">A</b>
-      </button>
-      <div class="readout">
-        <div class="hz" id="readout">0</div>
-        <div class="unit">MHz</div>
+  <div class="panel">
+    <div class="readout">
+      <div class="hz" id="readout">000.000<span class="lo">.00</span></div>
+      <div class="unit">MHz</div>
+    </div>
+
+    <div class="row" style="margin-top:10px;justify-content:space-between">
+      <div class="row" style="gap:6px">
+        <span class="legend">VFO</span>
+        <button id="btnVfo" class="slim" type="button">A / B</button>
+        <span class="prov asserted" id="provFreq">asserted</span>
       </div>
-      <div class="face-tags">
-        <span class="tag mode" id="tagMode">FM</span>
-        <span class="tag" id="tagBand">2 m</span>
-        <span class="prov staged" id="provFreq">staged</span>
+      <div class="row" style="gap:6px">
+        <button class="slim" data-step="-1000000" type="button">-1 MHz</button>
+        <button class="slim" data-step="-100000" type="button">-100 k</button>
+        <button class="slim" data-step="-10000" type="button">-10 k</button>
+        <button class="slim" data-step="-1000" type="button">-1 k</button>
+        <button class="slim" data-step="1000" type="button">+1 k</button>
+        <button class="slim" data-step="10000" type="button">+10 k</button>
+        <button class="slim" data-step="100000" type="button">+100 k</button>
+        <button class="slim" data-step="1000000" type="button">+1 MHz</button>
       </div>
     </div>
 
-    <div class="face-meters">
-      <div class="meterwrap">
-        <div class="meter">
-          <span class="legend">S</span>
-          <span class="bars" id="sBars" aria-hidden="true"></span>
-          <span class="val mono" id="sVal">--</span>
-        </div>
-        <div class="scale" aria-hidden="true">
-          <span>1</span><span>3</span><span>5</span><span>7</span><span>9</span><span>+20</span><span>+40</span><span>+60</span>
-        </div>
-      </div>
-      <div class="meterwrap">
-        <div class="meter txm">
-          <span class="legend">PO</span>
-          <span class="bars" id="pBars" aria-hidden="true"></span>
-          <span class="val mono" id="pVal">--</span>
-        </div>
-        <div class="lampstrip">
-          <span class="lamp" id="lampCt"><i></i>Tone</span>
-          <span class="lamp" id="lampDisc"><i></i>Centred</span>
-          <span class="lamp tx" id="lampSwr"><i></i>SWR</span>
-          <label class="check" title="Poll the radio for meters and status">
-            <input type="checkbox" id="pollChk" checked><span class="tiny">Poll</span></label>
-        </div>
-      </div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:12px">
+      <label class="field"><span>Set frequency (MHz)</span>
+        <input type="text" id="freqIn" inputmode="decimal" placeholder="14.25000"></label>
+      <label class="field"><span>Mode</span>
+        <select id="modeSel"></select></label>
+      <label class="field"><span>Repeater shift</span>
+        <select id="shiftSel">
+          <option value="simplex">Simplex</option>
+          <option value="minus">Minus</option>
+          <option value="plus">Plus</option>
+        </select></label>
+      <label class="field"><span>Shift offset (MHz)</span>
+        <input type="text" id="offsetIn" inputmode="decimal" value="0.600"></label>
+      <label class="field"><span>Tone mode</span>
+        <select id="toneModeSel">
+          <option value="off">Off</option>
+          <option value="encdec">Tone enc + dec</option>
+          <option value="ctcss">CTCSS</option>
+          <option value="dcs">DCS</option>
+        </select></label>
+      <label class="field"><span>CTCSS tone (Hz)</span>
+        <select id="toneSel"></select></label>
+      <label class="field"><span>DCS code</span>
+        <select id="dcsSel"></select></label>
+      <label class="field"><span>Clarifier (Hz)</span>
+        <input type="number" id="clarIn" value="0" step="10" min="-9990" max="9990"></label>
     </div>
 
-    <div class="warnstrip hide" id="splitWarn">
-      Split is on. The radio is transmitting on the other VFO, and CAT cannot report where that is.
+    <div class="row" style="margin-top:12px">
+      <button id="btnApply" type="button">Send to radio</button>
+      <button id="btnRead" type="button">Read radio</button>
+      <button id="btnSplit" type="button">Split</button>
+      <button id="btnClar" type="button">Clarifier</button>
+      <button id="btnLock" type="button">Dial lock</button>
+      <span class="grow"></span>
+      <button id="btnPtt" class="danger" type="button">Transmit</button>
+    </div>
+    <p class="tiny" style="margin:8px 0 0">Every control above acts on the radio as soon as you change it. Send to radio resends the whole panel in one pass, which is useful after a dropped command. Point at any digit in the readout and use the up and down arrow keys, or the scroll wheel, to tune it. Page up and page down move ten at a time. Tab into the readout to do the same from the keyboard alone, using left and right to change digit. Hold the space bar to transmit while this station is open.</p>
+  </div>
+
+  <div class="panel">
+    <div class="row" style="gap:18px;align-items:flex-start">
+      <div class="dialbox">
+        <svg id="wheel" viewBox="0 0 200 200" tabindex="0" role="spinbutton"
+             aria-label="Tuning dial. Drag to tune, or use the arrow keys."
+             aria-valuemin="0" aria-valuemax="999999990">
+          <circle class="w-body" cx="100" cy="100" r="88"></circle>
+          <g id="wheelRotor">
+            <g id="wheelTicks"></g>
+            <circle class="w-dimple" cx="100" cy="36" r="10"></circle>
+          </g>
+          <circle class="w-hub" cx="100" cy="100" r="34"></circle>
+          <polygon class="w-index" points="100,2 94,17 106,17"></polygon>
+        </svg>
+        <div class="tiny mono" id="wheelStep" style="text-align:center;margin-top:6px">1 kHz per click</div>
+      </div>
+      <div class="grow stack">
+        <div class="row" style="justify-content:space-between">
+          <span class="legend">Bands</span>
+          <div class="row" style="gap:8px">
+            <label class="field" style="max-width:170px"><span>Licence class</span>
+              <select id="licSel"></select></label>
+            <span class="tiny" id="bandNow"></span>
+          </div>
+        </div>
+        <div class="row" id="bandRack" style="gap:6px"></div>
+        <p class="tiny" style="margin:2px 0 0">Each button sends the radio to the bottom of that band's phone segment in the voice mode used there, with simplex shift, the band's standard repeater offset loaded, tone off, clarifier zeroed, and split off. Phone segment edges depend on licence class, so set yours above. Bands where your class has no phone privileges are greyed out. Only the bands an FT-897D covers are listed.</p>
+      </div>
     </div>
   </div>
 
-  <!-- the controls you reach for -->
-  <div class="controls">
-    <div class="dialbox">
-      <svg id="wheel" viewBox="0 0 200 200" tabindex="0" role="spinbutton"
-           aria-label="Tuning dial. Drag to tune, or use the arrow keys."
-           aria-valuemin="0" aria-valuemax="999999990">
-        <circle class="w-body" cx="100" cy="100" r="88"></circle>
-        <g id="wheelRotor">
-          <g id="wheelTicks"></g>
-          <circle class="w-dimple" cx="100" cy="36" r="10"></circle>
-        </g>
-        <circle class="w-hub" cx="100" cy="100" r="34"></circle>
-        <polygon class="w-index" points="100,2 94,17 106,17"></polygon>
-      </svg>
-      <div class="tiny mono" id="wheelStep">1 kHz per click</div>
+  <div class="panel">
+    <div class="row" style="justify-content:space-between">
+      <span class="legend">Meters</span>
+      <label class="check"><input type="checkbox" id="pollChk" checked><span class="tiny">Poll status</span></label>
     </div>
-
-    <div class="ctrl-stack">
-      <div class="ctrl-line">
-        <span class="legend">Mode</span>
-        <div class="seg" id="modeSel" role="radiogroup" aria-label="Operating mode"></div>
+    <div class="stack" style="margin-top:10px">
+      <div class="meter">
+        <span class="legend" style="min-width:32px">S</span>
+        <span class="bars" id="sBars" aria-hidden="true"></span>
+        <span class="val" id="sVal">--</span>
       </div>
-
-      <div class="ctrl-line">
-        <span class="legend">Band</span>
-        <div class="seg bands" id="bandRack"></div>
-        <select id="licSel" class="micro" aria-label="Licence class"></select>
+      <div class="meter txm">
+        <span class="legend" style="min-width:32px">PO</span>
+        <span class="bars" id="pBars" aria-hidden="true"></span>
+        <span class="val" id="pVal">--</span>
       </div>
-
-      <div class="ctrl-line">
-        <span class="legend">Go to</span>
-        <input type="text" id="freqIn" inputmode="decimal" placeholder="14.150" class="micro grow">
-        <button id="btnRead" class="slim" type="button" title="Ask the radio what it is really set to">Read radio</button>
-        <button id="btnApply" class="slim" type="button" title="Resend the whole panel">Resend</button>
-      </div>
-
-      <button id="btnPtt" class="ptt danger" type="button">Transmit</button>
-      <p class="tiny" style="margin:0">Hold the space bar, or hold this key, to transmit. Tune by pointing at a digit and arrowing it, or with the knob.</p>
+    </div>
+    <div class="row" style="margin-top:10px;gap:14px">
+      <span class="lamp" id="lampCt"><i></i>Tone match</span>
+      <span class="lamp" id="lampDisc"><i></i>Centred</span>
+      <span class="lamp tx" id="lampSwr"><i></i>High SWR</span>
     </div>
   </div>
 
-  <!-- everything you only reach for sometimes -->
-  <details class="drawer" id="drwRepeater">
-    <summary><span class="legend">Repeater and tone</span><span class="tiny" id="drwRepeaterNow"></span></summary>
-    <div class="drawer-body">
-      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
-        <label class="field"><span>Shift</span>
-          <select id="shiftSel">
-            <option value="simplex">Simplex</option>
-            <option value="minus">Minus</option>
-            <option value="plus">Plus</option>
-          </select></label>
-        <label class="field"><span>Shift offset (MHz)</span>
-          <input type="text" id="offsetIn" inputmode="decimal" value="0.600"></label>
-        <label class="field"><span>Tone mode</span>
-          <select id="toneModeSel">
-            <option value="off">Off</option>
-            <option value="encdec">Tone enc + dec</option>
-            <option value="ctcss">CTCSS</option>
-            <option value="dcs">DCS</option>
-          </select></label>
-        <label class="field"><span>CTCSS tone (Hz)</span><select id="toneSel"></select></label>
-        <label class="field"><span>DCS code</span><select id="dcsSel"></select></label>
-      </div>
-      <p class="tiny" style="margin:8px 0 0">None of these can be read back. Whatever is shown here is what Halyard last sent, never what the radio confirms.</p>
-    </div>
-  </details>
-
-  <details class="drawer" id="drwFine">
-    <summary><span class="legend">Clarifier, split, and lock</span><span class="tiny" id="drwFineNow"></span></summary>
-    <div class="drawer-body">
-      <div class="row">
-        <button id="btnSplit" type="button">Split</button>
-        <button id="btnClar" type="button">Clarifier</button>
-        <button id="btnLock" type="button">Dial lock</button>
-        <label class="field" style="max-width:180px"><span>Clarifier offset (Hz)</span>
-          <input type="number" id="clarIn" value="0" step="10" min="-9990" max="9990"></label>
-      </div>
-      <p class="tiny" style="margin:8px 0 0">Split transmits on the other VFO. Halyard cannot see where that VFO is pointing, so check the radio itself before keying.</p>
-    </div>
-  </details>
-
-  <details class="drawer" id="drwState">
-    <summary><span class="legend">What Halyard knows</span><span class="tiny" id="drwStateNow"></span></summary>
-    <div class="drawer-body">
-      <p class="tiny" style="margin:0 0 10px">Solid green means the radio reported it. Dashed amber means Halyard put it on the wire and got no acknowledgement. Dotted grey means it has not been sent at all.</p>
-      <div id="shadowGrid" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))"></div>
-    </div>
-  </details>
+  <div class="panel">
+    <span class="legend">Shadow state</span>
+    <p class="tiny" style="margin:6px 0 10px">The FT-897D will only report frequency, mode, and the two status bytes. Solid green means the radio said so. Dashed amber means Halyard put it on the wire and the radio never acknowledged it. Dotted grey means Halyard has not sent it to anything yet.</p>
+    <div id="shadowGrid" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))"></div>
+  </div>
 </section>
 
 <section id="st-scope" role="tabpanel" aria-labelledby="tab-scope" hidden>
@@ -623,60 +492,6 @@ body.compact .linkbar{gap:6px}
       <tbody id="peakBody"></tbody></table>
     </div>
   </div>
-</section>
-
-<section id="st-chart" role="tabpanel" aria-labelledby="tab-chart" hidden>
-
-  <div class="face">
-    <div class="row" style="justify-content:space-between;align-items:flex-start">
-      <div>
-        <span class="legend">Conditions</span>
-        <div class="mono" id="chartClock" style="font-size:1.05rem;margin-top:4px">--</div>
-        <div class="tiny" id="chartSun" style="margin-top:3px">--</div>
-      </div>
-      <div class="stack" style="gap:8px;align-items:flex-end">
-        <div class="row" style="gap:8px;align-items:flex-end">
-          <label class="field" style="max-width:88px"><span>SFI</span><input type="number" id="solSfi" class="micro" min="60" max="400"></label>
-          <label class="field" style="max-width:80px"><span>A index</span><input type="number" id="solA" class="micro" min="0" max="400"></label>
-          <label class="field" style="max-width:80px"><span>K index</span><input type="number" id="solK" class="micro" min="0" max="9"></label>
-          <button id="btnSolSave" class="slim" type="button">Record by hand</button>
-        </div>
-        <div class="row" style="gap:8px;align-items:flex-end">
-          <label class="field" style="min-width:280px"><span>Solar feed address (optional)</span>
-            <input type="text" id="solUrl" class="micro" placeholder="paste your worker address here" spellcheck="false"></label>
-          <button id="btnSolFetch" class="slim" type="button">Fetch now</button>
-          <label class="check"><input type="checkbox" id="solAuto"><span class="tiny">Auto</span></label>
-        </div>
-      </div>
-    </div>
-    <div class="row" style="margin-top:10px;gap:10px">
-      <span class="prov" id="solAge">no solar numbers recorded</span>
-      <span class="tiny" id="solExtra"></span>
-      <span class="grow"></span>
-      <span class="tiny" id="chartGrid"></span>
-    </div>
-  </div>
-
-  <div class="notice">Everything on this station is labelled with where it came from. <b>Measured</b> is what your own bandscope sweeps found. <b>Computed</b> is arithmetic from your grid square and the clock. <b>Entered</b> is what you typed in by hand. <b>Fetched</b> is a solar report pulled from an address you supply, which is the only thing in Halyard that ever touches the network, is off until you fill that box in, and never has to work for the rest of the instrument to. The day and night labels are a rule of thumb about when bands tend to work, not a forecast.</div>
-
-  <div class="panel">
-    <div class="row" style="justify-content:space-between">
-      <span class="legend">Band map</span>
-      <div class="row" style="gap:10px">
-        <label class="check"><input type="checkbox" id="chartMine" checked><span class="tiny">Only what I may use</span></label>
-        <span class="tiny" id="chartLic"></span>
-      </div>
-    </div>
-    <div id="bandMap" class="bandmap" style="margin-top:12px"></div>
-    <div class="row" style="margin-top:12px;gap:14px">
-      <span class="key"><i class="k-cw"></i>CW and data</span>
-      <span class="key"><i class="k-phone"></i>Phone</span>
-      <span class="key"><i class="k-none"></i>Outside your privileges</span>
-      <span class="key"><i class="k-here"></i>Where the radio is</span>
-    </div>
-  </div>
-
-  <div class="panel" id="bandDetail"></div>
 </section>
 
 <section id="st-locker" role="tabpanel" aria-labelledby="tab-locker" hidden>
@@ -890,7 +705,7 @@ body.compact .linkbar{gap:6px}
    GPL-3.0
    ===================================================================== */
 
-const VERSION = "1.11.0";
+const VERSION = "1.8.0";
 const FI = "FI-119";
 const NS = "halyard.v1";
 
@@ -1544,63 +1359,10 @@ function fillSelect(sel, items, valueOf, labelOf) {
   for (const it of items) sel.appendChild(el("option", { value: valueOf(it), text: labelOf(it) }));
 }
 function fillModeSelects() {
-  for (const id of ["cMode", "scMode"]) {
+  for (const id of ["modeSel", "cMode", "scMode"]) {
     fillSelect($(id), CAT.MODES, m => m.id, m => m.label);
   }
   $("scMode").value = "FM";
-  buildModeSeg();
-}
-
-/* A nine way choice you make constantly should be one press, not two, and
-   should show its state without being opened. Radiogroup semantics, roving
-   tabindex, arrow keys across the group. */
-function buildModeSeg() {
-  const box = $("modeSel");
-  if (!box) return;
-  clear(box);
-  for (const m of CAT.MODES) {
-    box.appendChild(el("button", {
-      type: "button", role: "radio", "aria-checked": "false", tabindex: "-1",
-      "data-mode": m.id, text: m.label, id: "mode-" + m.id,
-      onclick: () => chooseMode(m.id)
-    }));
-  }
-  box.addEventListener("keydown", (e) => {
-    const ids = CAT.MODES.map(m => m.id);
-    let i = ids.indexOf(panelMode());
-    if (e.key === "ArrowRight" || e.key === "ArrowDown") i++;
-    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") i--;
-    else if (e.key === "Home") i = 0;
-    else if (e.key === "End") i = ids.length - 1;
-    else return;
-    e.preventDefault();
-    const next = ids[clamp(i, 0, ids.length - 1)];
-    chooseMode(next);
-    const b = $("mode-" + next);
-    if (b && b.focus) b.focus();
-  });
-  setPanelMode("FM");
-}
-
-function panelMode() {
-  const on = $("modeSel") && $("modeSel").querySelector('[aria-checked="true"]');
-  return on ? on.getAttribute("data-mode") : "FM";
-}
-function setPanelMode(id) {
-  const box = $("modeSel");
-  if (!box) return;
-  for (const b of box.children) {
-    const on = b.getAttribute("data-mode") === id;
-    b.setAttribute("aria-checked", on ? "true" : "false");
-    b.tabIndex = on ? 0 : -1;
-  }
-  const tag = $("tagMode");
-  if (tag) tag.textContent = id;
-}
-function chooseMode(id) {
-  setPanelMode(id);
-  if (!link.connected) { toast("Not connected, so this is staged only", true); return; }
-  guarded(() => link.setMode(id));
 }
 function fillToneSelects() {
   for (const id of ["toneSel", "cTone"]) {
@@ -1713,25 +1475,6 @@ function renderHelm() {
   $("btnSplit").classList.toggle("on", !!sh.split.v);
   $("btnClar").classList.toggle("on", !!sh.clar.v);
   $("btnLock").classList.toggle("on", !!sh.lock.v);
-
-  /* the face */
-  $("vfoLetter").textContent = sh.vfo.v;
-  $("tagMode").textContent = sh.mode.v;
-  const band = Bands.forHz(sh.hz.v);
-  $("tagBand").textContent = band ? band.name : "out of band";
-  $("tagBand").classList.toggle("hide", false);
-  /* split moves the transmit frequency somewhere CAT cannot report */
-  $("splitWarn").classList.toggle("hide", !sh.split.v);
-
-  /* drawer summaries carry their own state, so you can leave them shut */
-  const tone = sh.toneMode.v === "off" ? "tone off"
-    : sh.toneMode.v === "dcs" ? "DCS " + String(sh.dcs.v).padStart(3, "0")
-    : Number(sh.ctcss.v).toFixed(1) + " Hz";
-  $("drwRepeaterNow").textContent = sh.shift.v + ", " + tone;
-  $("drwFineNow").textContent = [sh.split.v ? "split on" : null, sh.clar.v ? "clarifier on" : null,
-    sh.lock.v ? "locked" : null].filter(Boolean).join(", ") || "all off";
-  const confirmed = Object.keys(link.shadow).filter(k => link.shadow[k].p === "confirmed").length;
-  $("drwStateNow").textContent = confirmed + " of " + Object.keys(link.shadow).length + " fields confirmed";
   lamp("lampLink", link.connected);
   $("btnConnect").textContent = link.connected ? "Disconnect" : "Connect";
   Wheel.paint();
@@ -1819,7 +1562,7 @@ async function applyPanel() {
   await guarded(async () => {
     const hz = CAT.parseMHz($("freqIn").value);
     if (hz !== null) await link.setFrequency(hz);
-    await link.setMode(panelMode());
+    await link.setMode($("modeSel").value);
     await link.setShift($("shiftSel").value);
     const off = CAT.parseMHz($("offsetIn").value);
     if (off !== null) await link.setOffset(off);
@@ -2427,7 +2170,7 @@ const Log = (() => {
 function syncPanelFromShadow() {
   const s = link.shadow;
   $("freqIn").value = (s.hz.v / 1e6).toFixed(5);
-  setPanelMode(s.mode.v);
+  $("modeSel").value = s.mode.v;
   $("shiftSel").value = s.shift.v;
   $("offsetIn").value = (s.offsetHz.v / 1e6).toFixed(3);
   $("toneModeSel").value = s.toneMode.v;
@@ -3015,7 +2758,7 @@ const SelfTest = (() => {
         stageBand(BAND_SETUP.find(b => b.id === "2m"));
         const untouched = link.shadow.hz.v === before.hz && link.shadow.hz.p === before.p &&
           link.shadow.offsetHz.v === before.off;
-        const staged = $("freqIn").value === "146.52000" && panelMode() === "FM" &&
+        const staged = $("freqIn").value === "146.52000" && $("modeSel").value === "FM" &&
           $("shiftSel").value === "simplex" && $("offsetIn").value === "0.600";
         return untouched && staged;
       })());
@@ -3032,18 +2775,13 @@ const SelfTest = (() => {
 
       const fire = (id) => $(id).dispatchEvent(new Event("change", { bubbles: true }));
 
-      chooseMode("USB");
+      $("modeSel").value = "USB"; fire("modeSel");
       await sleep(30);
-      eq("pressing a mode button reaches the radio", vr5.state.modeCode, 0x01);
-      eq("the pressed mode button reads as chosen", $("mode-USB").getAttribute("aria-checked"), "true");
-      eq("the others read as not chosen", $("mode-FM").getAttribute("aria-checked"), "false");
-      eq("only the chosen mode is in the tab order", $("mode-USB").tabIndex, 0);
-      eq("the unchosen modes leave the tab order", $("mode-FM").tabIndex, -1);
-      chooseMode("FM");
+      eq("changing the mode dropdown reaches the radio", vr5.state.modeCode, 0x01);
+      $("modeSel").value = "FM"; fire("modeSel");
       await sleep(30);
-      eq("pressing another reaches the radio again", vr5.state.modeCode, 0x08);
+      eq("changing it again reaches the radio again", vr5.state.modeCode, 0x08);
       eq("the shadow followed the mode change", link.shadow.mode.v, "FM");
-      eq("the face tag follows the mode", $("tagMode").textContent, "FM");
 
       $("shiftSel").value = "minus"; fire("shiftSel");
       await sleep(30);
@@ -3080,317 +2818,11 @@ const SelfTest = (() => {
 
       /* with nothing connected a control change must not throw or pretend */
       const wasMode = link.shadow.mode.v;
-      chooseMode("AM");
+      $("modeSel").value = "AM"; fire("modeSel");
       await sleep(20);
-      eq("choosing a mode with no radio leaves the shadow alone", link.shadow.mode.v, wasMode);
-      eq("but the panel still shows the choice", panelMode(), "AM");
+      eq("changing a control with no radio leaves the shadow alone", link.shadow.mode.v, wasMode);
       syncPanelFromShadow();
     }
-
-    /* --- v1.9 the face --- */
-    ok("the mode segment has a button per mode", $("modeSel").children.length === CAT.MODES.length);
-    ok("the mode segment is a radiogroup", $("modeSel").getAttribute("role") === "radiogroup");
-    ok("every mode button is a real button with radio semantics",
-      Array.from($("modeSel").children).every(b => b.tagName === "BUTTON" && b.getAttribute("role") === "radio"));
-    ok("exactly one mode reads as chosen",
-      Array.from($("modeSel").children).filter(b => b.getAttribute("aria-checked") === "true").length === 1);
-    eq("reading the panel mode returns the chosen one",
-      (() => { setPanelMode("CW"); return panelMode(); })(), "CW");
-
-    {
-      const savedHz = link.shadow.hz.v, savedSplit = link.shadow.split.v;
-      link.set("hz", 14150000, "asserted"); link.set("mode", "USB", "asserted");
-      link.set("split", false, "asserted");
-      renderHelm();
-      eq("the face names the band", $("tagBand").textContent, "20 m");
-      eq("the face names the mode", $("tagMode").textContent, "USB");
-      ok("the split warning stays hidden when split is off", $("splitWarn").classList.contains("hide"));
-      link.set("split", true, "asserted");
-      renderHelm();
-      ok("the split warning appears when split is on", !$("splitWarn").classList.contains("hide"));
-      ok("the split warning says CAT cannot report the transmit frequency",
-        $("splitWarn").textContent.indexOf("cannot report") >= 0);
-      link.set("hz", 5000000, "asserted");
-      renderHelm();
-      eq("a frequency outside the amateur bands says so", $("tagBand").textContent, "out of band");
-      link.set("split", savedSplit, "asserted"); link.set("hz", savedHz, "asserted");
-      renderHelm();
-    }
-
-    ok("each drawer summarises its own state so it can stay shut",
-      $("drwRepeaterNow").textContent.length > 0 && $("drwFineNow").textContent.length > 0 &&
-      $("drwStateNow").textContent.length > 0);
-    ok("the state drawer counts confirmed fields",
-      /\d+ of \d+ fields confirmed/.test($("drwStateNow").textContent), $("drwStateNow").textContent);
-    ok("the redundant step buttons are gone, the knob and digits replaced them",
-      document.querySelectorAll("[data-step]").length === 0);
-    ok("the drawers are real disclosure elements",
-      ["drwRepeater", "drwFine", "drwState"].every(id => $(id).tagName === "DETAILS"));
-
-    /* --- v1.10 band plan --- */
-    eq("the band plan covers thirteen bands", BANDPLAN.length, 13);
-    ok("every band plan entry has a matching band rack entry",
-      BANDPLAN.every(b => BAND_SETUP.some(x => x.id === b.id)));
-    ok("every band plan entry matches the band edges Halyard already knew",
-      BANDPLAN.every(b => { const p = Bands.PLAN.find(x => x.adif === b.id);
-        return p && p.lo === b.lo; }),
-      BANDPLAN.filter(b => { const p = Bands.PLAN.find(x => x.adif === b.id); return !p || p.lo !== b.lo; })
-        .map(b => b.id).join(","));
-    ok("every segment sits inside its band",
-      BANDPLAN.every(b => b.segments.every(sg => sg.extra >= b.lo && sg.hi <= b.hi)),
-      BANDPLAN.filter(b => b.segments.some(sg => sg.extra < b.lo || sg.hi > b.hi)).map(b => b.id).join(","));
-    ok("segments run in order and do not overlap",
-      BANDPLAN.every(b => b.segments.every((sg, i) => i === 0 || sg.extra >= b.segments[i - 1].hi)));
-    /* 60 m is five discrete channels, not a contiguous band, so its usable
-       segment legitimately starts above the allocation edge */
-    ok("segments cover the whole of every contiguous band with no gaps",
-      BANDPLAN.filter(b => !b.channels).every(b => b.segments[0].extra === b.lo &&
-        b.segments[b.segments.length - 1].hi === b.hi),
-      BANDPLAN.filter(b => !b.channels && b.segments[0].extra !== b.lo).map(b => b.id).join(","));
-    ok("a channelised band's segment brackets all of its channels",
-      BANDPLAN.filter(b => b.channels).every(b =>
-        b.channels.every(hz => hz >= b.segments[0].extra && hz <= b.segments[b.segments.length - 1].hi)));
-    ok("a channelised band is marked as such rather than drawn as continuous",
-      BANDPLAN.find(b => b.id === "60m").note.indexOf("Channelised") >= 0);
-    ok("every band says what it is like to work",
-      BANDPLAN.every(b => typeof b.character === "string" && b.character.length > 20));
-    ok("every band declares what it favours",
-      BANDPLAN.every(b => ["day", "night", "both", "local"].indexOf(b.favours) >= 0));
-
-    /* privilege edges have to agree with the band rack, or the two stations lie
-       to each other */
-    ok("a General never gets a lower edge than an Extra in any segment",
-      BANDPLAN.every(b => b.segments.every(sg =>
-        sg.general === null || sg.general >= sg.extra)));
-    ok("a Technician holds nothing on the HF phone bands below 10 m",
-      BANDPLAN.filter(b => b.hi < 28000000 && b.id !== "60m").every(b =>
-        b.segments.filter(sg => sg.kind === "phone").every(sg => sg.tech === null)),
-      BANDPLAN.filter(b => b.hi < 28000000 && b.segments.some(sg => sg.kind === "phone" && sg.tech !== null))
-        .map(b => b.id).join(","));
-    ok("a Technician holds everything from 6 m up",
-      BANDPLAN.filter(b => b.lo >= 50000000).every(b => b.segments.every(sg => sg.tech !== null)));
-    eq("30 m has no phone segment at all",
-      BANDPLAN.find(b => b.id === "30m").segments.filter(sg => sg.kind === "phone").length, 0);
-    ok("30 m says in plain words that no class may talk there",
-      BANDPLAN.find(b => b.id === "30m").note.indexOf("No phone") >= 0);
-    eq("60 m lists its five channels", BANDPLAN.find(b => b.id === "60m").channels.length, 5);
-    ok("the 60 m channels are the usual sideband dial frequencies",
-      BANDPLAN.find(b => b.id === "60m").channels[0] === 5330500);
-
-    /* the two stations must agree about where a band button lands */
-    ok("every band rack landing spot is inside a segment its class may use",
-      BAND_SETUP.every(b => {
-        const plan = BANDPLAN.find(x => x.id === b.id);
-        if (!plan) return false;
-        return LICENCE_CLASSES.every(c => {
-          const land = b.phone[c.id];
-          if (land === null) return true;
-          return plan.segments.some(sg => sg[c.id] !== null && land >= sg[c.id] && land < sg.hi);
-        });
-      }),
-      BAND_SETUP.filter(b => {
-        const plan = BANDPLAN.find(x => x.id === b.id);
-        return !plan || !LICENCE_CLASSES.every(c => {
-          const land = b.phone[c.id];
-          return land === null || plan.segments.some(sg => sg[c.id] !== null && land >= sg[c.id] && land < sg.hi);
-        });
-      }).map(b => b.id).join(","));
-
-    /* --- v1.10 sun arithmetic --- */
-    {
-      const equinox = new Date("2026-03-20T12:00:00Z");
-      const eq0 = Sun.times(equinox, 0, 0);
-      const dayLen = (eq0.sunset - eq0.sunrise) / 3600000;
-      ok("day length at the equator on the equinox is about twelve hours",
-        Math.abs(dayLen - 12) < 0.3, "got " + dayLen.toFixed(2) + " h");
-      ok("sunrise comes before noon and noon before sunset",
-        eq0.sunrise < eq0.noon && eq0.noon < eq0.sunset);
-
-      const june = new Date("2026-06-21T12:00:00Z");
-      const dec = new Date("2026-12-21T12:00:00Z");
-      const nJune = Sun.times(june, 39.5, -77.5), nDec = Sun.times(dec, 39.5, -77.5);
-      const lenJune = (nJune.sunset - nJune.sunrise) / 3600000;
-      const lenDec = (nDec.sunset - nDec.sunrise) / 3600000;
-      ok("northern summer days are longer than northern winter days",
-        lenJune > lenDec + 4, "june " + lenJune.toFixed(1) + " h, december " + lenDec.toFixed(1) + " h");
-      ok("a mid latitude summer day runs about fifteen hours",
-        Math.abs(lenJune - 14.9) < 0.6, "got " + lenJune.toFixed(2));
-      ok("the southern hemisphere runs the other way round",
-        (() => { const s = Sun.times(june, -39.5, -77.5);
-          return (s.sunset - s.sunrise) / 3600000 < 10; })());
-      ok("the arctic in June reports a sun that does not set",
-        Sun.times(june, 78, 15).polar === "day");
-      ok("the arctic in December reports a sun that does not rise",
-        Sun.times(dec, 78, 15).polar === "night");
-
-      const st = Sun.state(new Date("2026-06-21T16:00:00Z"), 39.5, -77.5);
-      eq("noon at a mid northern latitude in June reads as day", st.phase, "day");
-      eq("the small hours read as night",
-        Sun.state(new Date("2026-06-21T06:00:00Z"), 39.5, -77.5).phase, "night");
-      ok("the hour around sunrise reads as grey line",
-        Sun.state(nJune.sunrise, 39.5, -77.5).grayline === true);
-      ok("the middle of the day is not grey line", st.grayline === false);
-    }
-
-    /* --- v1.10 chart rendering --- */
-    {
-      const savedLic = Store.get("licence", "extra");
-      Store.set("licence", "extra");
-      Chart.render();
-      ok("the band map drew a row per band", $("bandMap").children.length === BANDPLAN.length);
-      ok("each map row is reachable from the keyboard",
-        Array.from($("bandMap").children).every(r => r.getAttribute("tabindex") === "0"));
-      ok("the detail panel described the selected band",
-        $("bandDetail").textContent.indexOf("20 m") >= 0);
-      Store.set("licence", "tech");
-      Chart.renderMap();
-      const shown = $("bandMap").children.length;
-      ok("filtering to your own privileges hides the bands you do not hold",
-        shown < BANDPLAN.length, "showed " + shown + " of " + BANDPLAN.length);
-      ok("a Technician still sees 6 m, 2 m, and 70 cm",
-        Array.from($("bandMap").children).map(r => r.textContent).join(" ").indexOf("70 cm") >= 0);
-      $("chartMine").checked = false;
-      Chart.renderMap();
-      eq("turning the filter off shows every band again", $("bandMap").children.length, BANDPLAN.length);
-      $("chartMine").checked = true;
-      Store.set("licence", savedLic);
-      Chart.render();
-    }
-
-    ok("solar numbers are absent until they are entered",
-      (() => { const saved = Store.get("solar", null); Store.set("solar", null);
-        const none = Chart.solar() === null; if (saved) Store.set("solar", saved); return none; })());
-    ok("recorded solar numbers come back with an age",
-      (() => {
-        const saved = Store.get("solar", null);
-        Store.set("solar", { sfi: 150, a: 5, k: 2, when: new Date(Date.now() - 3600000).toISOString() });
-        const r = Chart.solar();
-        const okr = r && r.sfi === 150 && Math.abs(r.hours - 1) < 0.1;
-        if (saved) Store.set("solar", saved); else Store.set("solar", null);
-        return okr;
-      })());
-    ok("a malformed solar record is ignored rather than trusted",
-      (() => { const saved = Store.get("solar", null); Store.set("solar", { sfi: 1, when: "not a date" });
-        const none = Chart.solar() === null; if (saved) Store.set("solar", saved); else Store.set("solar", null);
-        return none; })());
-
-    /* --- v1.11 solar feed --- */
-    /* A fresh copy must reach for nothing. This is the property that keeps the
-       run from disk rule true, so it is asserted rather than assumed. */
-    {
-      const savedUrl = Store.get("solarUrl", "");
-      Store.set("solarUrl", "");
-      eq("no feed address is compiled in", SolarFeed.url(), "");
-      let refused = false;
-      try { await SolarFeed.fetchNow(true); } catch (e) { refused = /Set a feed address/.test(e.message); }
-      ok("with no address configured the feed refuses to fetch anything", refused);
-      /* any scheme that is not https must be refused. Written without a
-         literal http address so this file stays free of URLs entirely. */
-      Store.set("solarUrl", "ftp://example.invalid/solar");
-      let insecure = false;
-      try { await SolarFeed.fetchNow(true); } catch (e) { insecure = /https/.test(e.message); }
-      ok("an address that is not https is refused", insecure);
-      Store.set("solarUrl", savedUrl);
-    }
-
-    /* the parser, against the shape HamQSL actually publishes */
-    {
-      const sample = [
-        '<?xml version="1.0"?>',
-        '<solar><solardata>',
-        '<source>N0NBH</source>',
-        '<updated>18 Jul 2026 1800 GMT</updated>',
-        '<solarflux>142</solarflux><aindex>7</aindex><kindex>2</kindex>',
-        '<sunspots>96</sunspots><xray>B7.8</xray><heliumline>139.7</heliumline>',
-        '<aurora>3</aurora><geomagfield>QUIET</geomagfield><signalnoise>S0-S1</signalnoise>',
-        '<calculatedconditions>',
-        '<band name="80m-40m" time="day">Fair</band>',
-        '<band name="30m-20m" time="day">Good</band>',
-        '<band name="17m-15m" time="day">Good</band>',
-        '<band name="12m-10m" time="day">Poor</band>',
-        '<band name="80m-40m" time="night">Good</band>',
-        '<band name="30m-20m" time="night">Fair</band>',
-        '<band name="17m-15m" time="night">Poor</band>',
-        '<band name="12m-10m" time="night">Poor</band>',
-        '</calculatedconditions>',
-        '<calculatedvhfconditions>',
-        '<phenomenon name="E-Skip" location="north_america">Band Closed</phenomenon>',
-        '</calculatedvhfconditions>',
-        '</solardata></solar>'
-      ].join("");
-      const r = SolarFeed.parse(sample);
-      eq("the parser reads the solar flux", r.sfi, 142);
-      eq("the parser reads the A index", r.a, 7);
-      eq("the parser reads the K index", r.k, 2);
-      eq("the parser reads the sunspot number", r.sunspots, 96);
-      eq("the parser reads the X-ray class", r.xray, "B7.8");
-      eq("the parser reads the geomagnetic field", r.geomag, "QUIET");
-      eq("the parser reads the report's own timestamp", r.updated, "18 Jul 2026 1800 GMT");
-      eq("the parser credits the source", r.source, "N0NBH");
-      eq("a band group is spread across the bands it covers", r.bands["40m"].day, "Fair");
-      eq("60 m is covered by the 80 to 40 group", r.bands["60m"].night, "Good");
-      eq("20 m picks up its daytime rating", r.bands["20m"].day, "Good");
-      eq("15 m picks up its night rating", r.bands["15m"].night, "Poor");
-      ok("VHF phenomena are carried through", Object.keys(r.vhf).length === 1);
-      ok("160 m is left blank because the feed does not rate it", r.bands["160m"] === undefined);
-
-      /* two groups can name the same band; the worse rating has to win, or the
-         chart would flatter a band that one of its halves says is poor */
-      const overlap = sample.replace('<band name="30m-20m" time="day">Good</band>',
-        '<band name="30m-20m" time="day">Good</band><band name="20m-17m" time="day">Poor</band>');
-      eq("where two groups disagree the worse rating is kept",
-        SolarFeed.parse(overlap).bands["20m"].day, "Poor");
-
-      /* nothing off the wire may become markup, and nonsense must be refused */
-      const nasty = sample.replace("<geomagfield>QUIET</geomagfield>",
-        "<geomagfield>&lt;img src=x onerror=alert(1)&gt;</geomagfield>");
-      const parsedNasty = SolarFeed.parse(nasty);
-      ok("markup in a feed value stays inert text",
-        parsedNasty.geomag.indexOf("<img") === 0 && parsedNasty.geomag.length <= 24);
-      const wild = sample.replace("<kindex>2</kindex>", "<kindex>999</kindex>");
-      eq("an out of range index is clamped rather than trusted", SolarFeed.parse(wild).k, 9);
-      throws("a page that is not a solar report is rejected",
-        () => SolarFeed.parse("<html><body>Login required</body></html>"));
-      throws("malformed XML is rejected", () => SolarFeed.parse("<solar><unclosed>"));
-    }
-
-    /* fetched and hand entered numbers coexist, and the fresher one is used */
-    {
-      const savedFeed = Store.get("solarFeed", null), savedManual = Store.get("solar", null);
-      Store.set("solarFeed", null); Store.set("solar", null);
-      ok("with neither source there is nothing to show", SolarFeed.best() === null);
-      Store.set("solar", { sfi: 100, a: 1, k: 1, when: new Date(Date.now() - 7200000).toISOString() });
-      eq("with only hand entered numbers those are used", SolarFeed.best().kind, "entered");
-      Store.set("solarFeed", { sfi: 142, a: 7, k: 2, bands: {}, at: new Date().toISOString() });
-      eq("a fresher fetched report wins", SolarFeed.best().kind, "fetched");
-      Store.set("solar", { sfi: 100, a: 1, k: 1, when: new Date(Date.now() + 60000).toISOString() });
-      eq("but a newer hand entry wins over an older fetch", SolarFeed.best().kind, "entered");
-      Store.set("solarFeed", savedFeed); Store.set("solar", savedManual);
-    }
-
-    ok("a band rating is only reported when the feed actually carried one",
-      (() => {
-        const saved = Store.get("solarFeed", null);
-        Store.set("solarFeed", { sfi: 1, a: 1, k: 1, at: new Date().toISOString(),
-          bands: { "20m": { day: "Good" } } });
-        const good = SolarFeed.bandRating("20m", "day") === "Good" &&
-          SolarFeed.bandRating("20m", "night") === null &&
-          SolarFeed.bandRating("160m", "day") === null;
-        Store.set("solarFeed", saved);
-        return good;
-      })());
-
-    ok("a failed fetch does not start the politeness clock, so a bad address can be corrected at once",
-      (() => {
-        const savedTried = Store.get("solarTriedAt", 0), savedUrl = Store.get("solarUrl", "");
-        Store.set("solarTriedAt", 0);
-        Store.set("solarUrl", "");
-        let threw = false;
-        try { SolarFeed.fetchNow(false); } catch (e) { threw = true; }
-        const untouched = Number(Store.get("solarTriedAt", 0)) === 0;
-        Store.set("solarTriedAt", savedTried); Store.set("solarUrl", savedUrl);
-        return untouched;
-      })());
 
     /* --- rendering does not blow up --- */
     let drew = true;
@@ -3462,10 +2894,7 @@ function buildAbout() {
     "1.5.0  The readout became the dial. Hover or focus any digit and arrow it up and down, with carry into the place above.",
     "1.6.0  A knob you can actually turn, flick, and let coast, plus a band rack that drops the radio on the bottom edge of any band the FT-897D covers.",
     "1.7.0  Fixed a repeater offset leaking from the VHF bands onto HF, where CAT cannot read it back. Added a third provenance mark, staged, so Halyard stops claiming it sent things it never sent.",
-    "1.8.0  Fixed the panel controls, which did nothing until Send to radio was pressed. Band buttons now land in the phone segment in a voice mode, with the edges following your licence class.",
-    "1.11.0  The Chart can now pull a HamQSL solar report from an address you supply. Nothing is compiled in, so a fresh copy still makes no network requests at all.",
-    "1.10.0  New Chart station: a band map showing what every band is and which parts your licence class may use, plus the conditions that can honestly be known without a network.",
-    "1.9.0  The Helm rebuilt as one instrument face. Readout, meters, and lamps together at the top, knob and controls beside each other, and everything occasional moved into drawers that summarise themselves."
+    "1.8.0  Fixed the panel controls, which did nothing until Send to radio was pressed. Band buttons now land in the phone segment in a voice mode, with the edges following your licence class."
   ]) vl.appendChild(el("li", { text: t }));
   b.appendChild(vl);
   b.appendChild(el("div", { class: "legend", text: "Credits and licence" }));
@@ -3550,7 +2979,6 @@ function showStation(id) {
   }
   Store.set("station", id);
   if (id === "scope") Scope.draw(null, null);
-  if (id === "chart") { Chart.render(); Chart.maybeAutoFetch(); }
 }
 
 function centreOfView() {
@@ -3682,21 +3110,6 @@ function wire() {
       Trials.render(); renderHelm();
     });
   }
-  /* chart */
-  $("btnSolSave").addEventListener("click", () => Chart.saveSolar());
-  $("btnSolFetch").addEventListener("click", () => Chart.fetchFeed(false));
-  $("solUrl").addEventListener("change", () => {
-    const u = $("solUrl").value.trim();
-    if (u && !/^https:\/\//i.test(u)) { toast("The feed address has to be https", true); return; }
-    SolarFeed.setUrl(u);
-    toast(u ? "Solar feed address saved" : "Solar feed switched off");
-  });
-  $("solAuto").addEventListener("change", () => {
-    SolarFeed.setAuto($("solAuto").checked);
-    if ($("solAuto").checked) Chart.maybeAutoFetch();
-  });
-  $("chartMine").addEventListener("change", () => Chart.renderMap());
-
   $("btnSelfTest").addEventListener("click", runSelfTest);
   $("dbgChk").addEventListener("change", () => {
     link.debug = $("dbgChk").checked;
@@ -3721,6 +3134,7 @@ function wire() {
       guarded(fn);
     });
   }
+  live("modeSel",     () => link.setMode($("modeSel").value));
   live("shiftSel",    () => link.setShift($("shiftSel").value));
   live("offsetIn",    () => {
     const hz = CAT.parseMHz($("offsetIn").value);
@@ -3749,13 +3163,11 @@ function wire() {
     return link.setFrequency(hz);
   });
 
-  /* Licence class decides where band buttons land and what the chart shows.
-     One handler, so the store is written before anything reads it back. */
+  /* licence class decides where each band button lands */
   $("licSel").addEventListener("change", () => {
     Store.set("licence", $("licSel").value);
     renderBandRack();
-    if (typeof Chart !== "undefined") Chart.render();
-    toast("Now using " + $("licSel").options[$("licSel").selectedIndex].text + " privileges");
+    toast("Band buttons now use " + $("licSel").options[$("licSel").selectedIndex].text + " phone segments");
   });
 
   /* v1.2 bandscope: presets, trace maths, markers, harvest */
@@ -3830,23 +3242,6 @@ function wire() {
   });
   $("btnEvidClear").addEventListener("click", () => Trials.clearEvidence());
 
-  /* the repeater drawer opens itself the first time FM is chosen, because
-     that is the only time any of it matters */
-  let repeaterDrawerNudged = false;
-  link.on((what) => {
-    if (what === "state" && !repeaterDrawerNudged && link.shadow.mode.v === "FM") {
-      repeaterDrawerNudged = true;
-      const d = $("drwRepeater");
-      if (d && !d.open) d.open = true;
-    }
-  });
-
-  for (const id of ["drwRepeater", "drwFine", "drwState"]) {
-    const d = $(id);
-    d.open = !!Store.get("drawer." + id, false);
-    d.addEventListener("toggle", () => Store.set("drawer." + id, d.open));
-  }
-
   /* the link tells the UI when anything changed */
   link.on((what) => {
     if (what === "traffic") renderTraffic();
@@ -3888,8 +3283,6 @@ function boot() {
 
   Constants.render();
   Trials.render();
-  Chart.render();
-  Chart.start();
   Trials.renderEvidence();
   Field.start();
 
@@ -4926,7 +4319,7 @@ function stageBand(b) {
   const hz = bandLanding(b);
   if (hz === null) return;
   $("freqIn").value = (hz / 1e6).toFixed(5);
-  setPanelMode(b.mode);
+  $("modeSel").value = b.mode;
   $("shiftSel").value = "simplex";
   $("offsetIn").value = ((b.repeater ? b.offsetHz : 0) / 1e6).toFixed(3);
   $("toneModeSel").value = "off";
@@ -5146,622 +4539,6 @@ const Wheel = (() => {
     get angle() { return angle; },
     get spinning() { return coasting !== null; },
     _flick(v) { velocity = v; coast(); } };
-})();
-
-
-/* =====================================================================
-   v1.10  BAND PLAN
-   What each band actually is, and which parts of it your licence class
-   may use. United States allocations, Part 97. This is a reference for
-   operating, not an authority: check the FCC rules before you key up.
-   Each segment lists the low edge per class. A null means that class
-   holds nothing in that segment.
-   ===================================================================== */
-const BANDPLAN = [
-  { id: "160m", name: "160 m", lo: 1800000, hi: 2000000, favours: "night",
-    character: "Local by day, continental to worldwide after dark. Noisy in summer.",
-    segments: [
-      { kind: "phone", label: "CW, data, phone, image", hi: 2000000,
-        extra: 1800000, general: 1800000, tech: null }
-    ] },
-  { id: "80m", name: "80 m", lo: 3500000, hi: 4000000, favours: "night",
-    character: "Regional after dark, a few hundred miles by day. The classic evening net band.",
-    segments: [
-      { kind: "cw", label: "CW and data", hi: 3600000,
-        extra: 3500000, general: 3525000, tech: 3525000, techNote: "CW only" },
-      { kind: "phone", label: "Phone and image", hi: 4000000,
-        extra: 3600000, general: 3800000, tech: null }
-    ] },
-  { id: "60m", name: "60 m", lo: 5330000, hi: 5407000, favours: "night",
-    character: "Five fixed channels. Fills the gap between 80 and 40 for regional work.",
-    note: "Channelised. Upper sideband, CW, or data on the channel centres only, 100 W ERP.",
-    channels: [5330500, 5346500, 5357000, 5371500, 5403500],
-    segments: [
-      { kind: "phone", label: "Five fixed channels", hi: 5407000,
-        extra: 5330500, general: 5330500, tech: null }
-    ] },
-  { id: "40m", name: "40 m", lo: 7000000, hi: 7300000, favours: "night",
-    character: "Reliable day and night. Regional in daylight, worldwide after dark.",
-    segments: [
-      { kind: "cw", label: "CW and data", hi: 7125000,
-        extra: 7000000, general: 7025000, tech: 7025000, techNote: "CW only" },
-      { kind: "phone", label: "Phone and image", hi: 7300000,
-        extra: 7125000, general: 7175000, tech: null }
-    ] },
-  { id: "30m", name: "30 m", lo: 10100000, hi: 10150000, favours: "both",
-    character: "Open day and night more often than any other band. Narrow, and quiet.",
-    note: "CW and data only. No phone for any licence class. 200 W PEP.",
-    segments: [
-      { kind: "cw", label: "CW and data only", hi: 10150000,
-        extra: 10100000, general: 10100000, tech: null }
-    ] },
-  { id: "20m", name: "20 m", lo: 14000000, hi: 14350000, favours: "day",
-    character: "The workhorse. Open somewhere most daylight hours, often well into evening.",
-    segments: [
-      { kind: "cw", label: "CW and data", hi: 14150000,
-        extra: 14000000, general: 14025000, tech: null },
-      { kind: "phone", label: "Phone and image", hi: 14350000,
-        extra: 14150000, general: 14225000, tech: null }
-    ] },
-  { id: "17m", name: "17 m", lo: 18068000, hi: 18168000, favours: "day",
-    character: "Quieter cousin of 20. Daylight, and needs a reasonable solar flux.",
-    segments: [
-      { kind: "cw", label: "CW and data", hi: 18110000,
-        extra: 18068000, general: 18068000, tech: null },
-      { kind: "phone", label: "Phone and image", hi: 18168000,
-        extra: 18110000, general: 18110000, tech: null }
-    ] },
-  { id: "15m", name: "15 m", lo: 21000000, hi: 21450000, favours: "day",
-    character: "Daylight DX when the sun is active. Dead at solar minimum.",
-    segments: [
-      { kind: "cw", label: "CW and data", hi: 21200000,
-        extra: 21000000, general: 21025000, tech: 21025000, techNote: "CW only" },
-      { kind: "phone", label: "Phone and image", hi: 21450000,
-        extra: 21200000, general: 21275000, tech: null }
-    ] },
-  { id: "12m", name: "12 m", lo: 24890000, hi: 24990000, favours: "day",
-    character: "Opens on good solar days, often unnoticed because nobody listens.",
-    segments: [
-      { kind: "cw", label: "CW and data", hi: 24930000,
-        extra: 24890000, general: 24890000, tech: null },
-      { kind: "phone", label: "Phone and image", hi: 24990000,
-        extra: 24930000, general: 24930000, tech: null }
-    ] },
-  { id: "10m", name: "10 m", lo: 28000000, hi: 29700000, favours: "day",
-    character: "Spectacular at solar maximum, silent at minimum. Sporadic E in early summer.",
-    segments: [
-      { kind: "cw", label: "CW and data", hi: 28300000,
-        extra: 28000000, general: 28000000, tech: 28000000, techNote: "CW and data" },
-      { kind: "phone", label: "Phone, all classes", hi: 28500000,
-        extra: 28300000, general: 28300000, tech: 28300000, techNote: "phone, 200 W PEP" },
-      { kind: "phone", label: "Phone and image", hi: 29700000,
-        extra: 28500000, general: 28500000, tech: null }
-    ] },
-  { id: "6m", name: "6 m", lo: 50000000, hi: 54000000, favours: "local",
-    character: "The magic band. Local most days, then sporadic E turns it continental without warning.",
-    segments: [
-      { kind: "cw", label: "CW only", hi: 50100000,
-        extra: 50000000, general: 50000000, tech: 50000000 },
-      { kind: "phone", label: "All modes", hi: 54000000,
-        extra: 50100000, general: 50100000, tech: 50100000 }
-    ] },
-  { id: "2m", name: "2 m", lo: 144000000, hi: 148000000, favours: "local",
-    character: "Line of sight and repeaters. Tropospheric ducting stretches it at times.",
-    segments: [
-      { kind: "cw", label: "CW only", hi: 144100000,
-        extra: 144000000, general: 144000000, tech: 144000000 },
-      { kind: "phone", label: "All modes", hi: 148000000,
-        extra: 144100000, general: 144100000, tech: 144100000 }
-    ] },
-  { id: "70cm", name: "70 cm", lo: 420000000, hi: 450000000, favours: "local",
-    character: "Repeaters, links, and short local work. Coverage varies by region.",
-    segments: [
-      { kind: "phone", label: "All modes", hi: 450000000,
-        extra: 420000000, general: 420000000, tech: 420000000 }
-    ] }
-];
-
-/* =====================================================================
-   v1.10  SUN
-   Sunrise and sunset worked out from the operator's grid square and the
-   clock. Pure arithmetic, no network, which is the only way this can
-   exist in an instrument that runs from disk.
-   ===================================================================== */
-const Sun = (() => {
-  const rad = Math.PI / 180;
-  const dayMs = 86400000, J1970 = 2440588, J2000 = 2451545;
-  const toJulian = (d) => d.valueOf() / dayMs - 0.5 + J1970;
-  const fromJulian = (j) => new Date((j + 0.5 - J1970) * dayMs);
-  const toDays = (d) => toJulian(d) - J2000;
-  const obliquity = rad * 23.4397;
-
-  const meanAnomaly = (d) => rad * (357.5291 + 0.98560028 * d);
-  const eclipticLon = (M) => M + rad * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) +
-    0.0003 * Math.sin(3 * M)) + rad * 102.9372 + Math.PI;
-  const declination = (L) => Math.asin(Math.sin(obliquity) * Math.sin(L));
-  const cycle = (d, lw) => Math.round(d - 0.0009 - lw / (2 * Math.PI));
-  const approxTransit = (Ht, lw, n) => 0.0009 + (Ht + lw) / (2 * Math.PI) + n;
-  const transitJ = (ds, M, L) => J2000 + ds + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
-
-  function times(date, lat, lon) {
-    const lw = rad * -lon, phi = rad * lat;
-    const d = toDays(date);
-    const n = cycle(d, lw);
-    const ds = approxTransit(0, lw, n);
-    const M = meanAnomaly(ds);
-    const L = eclipticLon(M);
-    const dec = declination(L);
-    const Jnoon = transitJ(ds, M, L);
-    const h0 = -0.833 * rad;
-    const cosW = (Math.sin(h0) - Math.sin(phi) * Math.sin(dec)) / (Math.cos(phi) * Math.cos(dec));
-    if (cosW > 1) return { polar: "night", noon: fromJulian(Jnoon) };   // sun never rises
-    if (cosW < -1) return { polar: "day", noon: fromJulian(Jnoon) };    // sun never sets
-    const w = Math.acos(cosW);
-    const Jset = transitJ(approxTransit(w, lw, n), M, L);
-    const Jrise = Jnoon - (Jset - Jnoon);
-    return { sunrise: fromJulian(Jrise), sunset: fromJulian(Jset), noon: fromJulian(Jnoon), polar: null };
-  }
-
-  /* daylight, darkness, or the hour either side of the terminator */
-  function state(date, lat, lon) {
-    const t = times(date, lat, lon);
-    if (t.polar === "day") return { phase: "day", grayline: false, t };
-    if (t.polar === "night") return { phase: "night", grayline: false, t };
-    const now = date.valueOf();
-    const up = t.sunrise.valueOf(), down = t.sunset.valueOf();
-    const hour = 3600000;
-    const grayline = Math.abs(now - up) < hour || Math.abs(now - down) < hour;
-    return { phase: (now >= up && now <= down) ? "day" : "night", grayline, t };
-  }
-  return { times, state };
-})();
-
-/* =====================================================================
-   v1.10  CHART
-   The band map, plus whatever can honestly be said about conditions
-   without a network connection.
-   ===================================================================== */
-const Chart = (() => {
-  let selected = "20m";
-  let ticker = null;
-
-  const classLo = (seg) => seg[licence()];
-  const usable = (b) => b.segments.some(sg => classLo(sg) !== null && classLo(sg) !== undefined);
-
-  /* what our own sweeps found in this band, which is the only measured
-     thing in here */
-  function measured(b) {
-    const inBand = App.sweeps.filter(s => s.startHz >= b.lo && s.startHz <= b.hi);
-    if (!inBand.length) return null;
-    const all = [];
-    for (const s of inBand) for (const v of s.samples) all.push(v);
-    if (!all.length) return null;
-    const sorted = all.slice().sort((x, y) => x - y);
-    return {
-      sweeps: inBand.length,
-      floor: sorted[Math.floor(sorted.length / 2)],
-      peak: sorted[sorted.length - 1],
-      when: new Date(Math.max.apply(null, inBand.map(s => s.t)))
-    };
-  }
-
-  function solar() {
-    const r = Store.get("solar", null);
-    if (!r || typeof r !== "object") return null;
-    const when = Date.parse(r.when);
-    if (!Number.isFinite(when)) return null;
-    return { sfi: Number(r.sfi), a: Number(r.a), k: Number(r.k), when: new Date(when),
-      hours: (Date.now() - when) / 3600000 };
-  }
-
-  function grid() { return (typeof Log !== "undefined" && Log.myGrid) ? Log.myGrid() : ""; }
-
-  function renderConditions() {
-    const now = new Date();
-    $("chartClock").textContent = now.toISOString().slice(11, 16) + " UTC   " +
-      now.toTimeString().slice(0, 5) + " local";
-
-    const g = grid();
-    const at = g ? Grid.toLatLon(g) : null;
-    const sunLine = $("chartSun");
-    if (!at) {
-      sunLine.textContent = "Set your grid square on the Log station to work out sunrise and sunset here.";
-      $("chartGrid").textContent = "no grid set";
-    } else {
-      const st = Sun.state(now, at.lat, at.lon);
-      const hm = (d) => d ? d.toISOString().slice(11, 16) : "--";
-      sunLine.textContent = st.t.polar
-        ? (st.t.polar === "day" ? "The sun does not set at your grid today." : "The sun does not rise at your grid today.")
-        : "Sunrise " + hm(st.t.sunrise) + " UTC, sunset " + hm(st.t.sunset) + " UTC. " +
-          "It is " + st.phase + " at your grid" + (st.grayline ? ", and you are on the grey line." : ".");
-      $("chartGrid").textContent = "computed for " + g;
-    }
-
-    const pick = SolarFeed.best();
-    const chip = $("solAge");
-    const extra = $("solExtra");
-    extra.textContent = "";
-    if (!pick) {
-      chip.className = "prov staged";
-      chip.textContent = "no solar numbers yet";
-    } else {
-      const r = pick.r;
-      const hours = pick.kind === "fetched" ? r.hours : r.hours;
-      const stale = hours > 12;
-      const ago = hours < 1 ? Math.round(hours * 60) + " minutes ago" : Math.round(hours) + " hours ago";
-      chip.className = "prov " + (stale ? "asserted" : "confirmed");
-      chip.textContent = "SFI " + r.sfi + ", A " + r.a + ", K " + r.k + ", " +
-        (pick.kind === "fetched" ? "fetched " : "entered ") + ago +
-        (stale ? ", worth refreshing" : "");
-      if (pick.kind === "fetched") {
-        extra.textContent = [
-          r.sunspots !== null ? r.sunspots + " sunspots" : null,
-          r.xray ? "X-ray " + r.xray : null,
-          r.geomag ? "field " + r.geomag.toLowerCase() : null,
-          r.noise ? "noise " + r.noise : null,
-          r.updated ? "report stamped " + r.updated : null,
-          r.source ? "via " + r.source : null
-        ].filter(Boolean).join(",  ");
-      }
-      $("solSfi").value = r.sfi; $("solA").value = r.a; $("solK").value = r.k;
-    }
-    $("solUrl").value = SolarFeed.url();
-    $("solAuto").checked = SolarFeed.auto();
-    $("chartLic").textContent = LICENCE_CLASSES.find(c => c.id === licence()).name;
-  }
-
-  function renderMap() {
-    const map = $("bandMap");
-    if (!map) return;
-    clear(map);
-    const onlyMine = $("chartMine").checked;
-    const here = link.shadow.hz.v;
-
-    for (const b of BANDPLAN) {
-      const mine = usable(b);
-      if (onlyMine && !mine) continue;
-      const span = b.hi - b.lo;
-      const pct = (hz) => ((hz - b.lo) / span) * 100;
-
-      const bar = el("div", { class: "bmbar" });
-      for (const sg of b.segments) {
-        const lo = classLo(sg);
-        const segLo = sg.extra;   // the widest any class holds, for the backdrop
-        /* the part no class of yours may use is drawn hatched */
-        if (lo === null || lo === undefined) {
-          bar.appendChild(el("div", { class: "bs none",
-            style: "left:" + pct(segLo) + "%;width:" + (pct(sg.hi) - pct(segLo)) + "%" }));
-        } else {
-          if (lo > segLo) {
-            bar.appendChild(el("div", { class: "bs none",
-              style: "left:" + pct(segLo) + "%;width:" + (pct(lo) - pct(segLo)) + "%" }));
-          }
-          bar.appendChild(el("div", { class: "bs " + sg.kind,
-            style: "left:" + pct(lo) + "%;width:" + (pct(sg.hi) - pct(lo)) + "%",
-            title: sg.label + ", " + CAT.formatMHz(lo) + " to " + CAT.formatMHz(sg.hi) }));
-        }
-      }
-      if (here >= b.lo && here <= b.hi) {
-        bar.appendChild(el("div", { class: "bs here", style: "left:" + pct(here) + "%" }));
-      }
-      const m = measured(b);
-      if (m) {
-        bar.appendChild(el("div", { class: "bs noise",
-          style: "left:0;width:100%;top:" + (100 - (m.floor / 15) * 100).toFixed(0) + "%",
-          title: "Median noise floor " + CAT.sMeterLabel(m.floor) + " from " + m.sweeps + " of your sweeps" }));
-      }
-
-      const row = el("div", {
-        class: "bmrow" + (b.id === selected ? " sel" : "") + (mine ? "" : " dead"),
-        tabindex: "0", role: "button",
-        "aria-label": b.name + ", " + CAT.formatMHz(b.lo) + " to " + CAT.formatMHz(b.hi),
-        onclick: () => { selected = b.id; renderMap(); renderDetail(); },
-        onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault();
-          selected = b.id; renderMap(); renderDetail(); } }
-      }, [
-        el("span", { class: "bname", text: b.name }),
-        bar,
-        el("span", { class: "bchar " + favourClass(b), text: mine ? favourLabel(b) : "no privileges" })
-      ]);
-      map.appendChild(row);
-    }
-  }
-
-  function phaseNow() {
-    const g = grid();
-    const at = g ? Grid.toLatLon(g) : null;
-    if (!at) return null;
-    return Sun.state(new Date(), at.lat, at.lon);
-  }
-
-  /* A fetched rating is real reported data and beats the rule of thumb, so it
-     is shown instead and marked as fetched. Without one, the rule of thumb is
-     all there is, and it says so. */
-  function favourLabel(b) {
-    const st = phaseNow();
-    const rating = st ? SolarFeed.bandRating(b.id, st.phase) : null;
-    if (rating) return rating.toLowerCase() + " now, reported";
-    if (!st) return b.favours === "local" ? "local" : b.favours;
-    if (b.favours === "local") return "local";
-    if (b.favours === "both") return "day and night";
-    const good = (b.favours === "day" && st.phase === "day") || (b.favours === "night" && st.phase === "night");
-    return (good ? "favoured now" : b.favours + " band") + (st.grayline ? ", grey line" : "");
-  }
-  function favourClass(b) {
-    const st = phaseNow();
-    const rating = st ? SolarFeed.bandRating(b.id, st.phase) : null;
-    if (rating === "Good") return "rate-good";
-    if (rating === "Fair") return "rate-fair";
-    if (rating === "Poor") return "rate-poor";
-    return "";
-  }
-
-  function renderDetail() {
-    const box = $("bandDetail");
-    if (!box) return;
-    clear(box);
-    const b = BANDPLAN.find(x => x.id === selected);
-    if (!b) return;
-
-    box.appendChild(el("div", { class: "row", style: "justify-content:space-between" }, [
-      el("span", { class: "legend", text: b.name + "   " + CAT.formatMHz(b.lo) + " to " + CAT.formatMHz(b.hi) }),
-      el("span", { class: "tiny", text: LICENCE_CLASSES.find(c => c.id === licence()).name })
-    ]));
-    box.appendChild(el("p", { class: "tiny", style: "margin:8px 0 4px", text: b.character }));
-    if (b.note) box.appendChild(el("p", { class: "tiny", style: "margin:0 0 8px;color:var(--warn)", text: b.note }));
-
-    for (const sg of b.segments) {
-      const lo = classLo(sg);
-      const has = lo !== null && lo !== undefined;
-      const line = el("div", { class: "segline" }, [
-        el("div", {}, [
-          el("div", { class: "mono", text: has
-            ? CAT.formatMHz(lo) + "  to  " + CAT.formatMHz(sg.hi)
-            : CAT.formatMHz(sg.extra) + "  to  " + CAT.formatMHz(sg.hi) }),
-          el("div", { class: "tiny", text: sg.label +
-            (has && sg[licence() + "Note"] ? ", " + sg[licence() + "Note"] : "") +
-            (has ? "" : ", not available to your licence class") })
-        ]),
-        has ? el("button", { class: "slim", type: "button", text: "Tune here",
-          onclick: () => guarded(async () => {
-            await link.setFrequency(lo);
-            await link.setMode(sg.kind === "cw" ? "CW" : (lo < 10000000 ? "LSB" : (lo > 100000000 ? "FM" : "USB")));
-            syncPanelFromShadow();
-            toast("Tuned to " + CAT.formatMHz(lo));
-          }) }) : el("span", { class: "prov", text: "no privileges" })
-      ]);
-      box.appendChild(line);
-    }
-
-    if (b.channels) {
-      box.appendChild(el("div", { class: "legend", style: "margin-top:12px", text: "Channels" }));
-      const row = el("div", { class: "row", style: "margin-top:6px" });
-      for (const hz of b.channels) {
-        row.appendChild(el("button", { class: "slim", type: "button", text: CAT.formatMHz(hz),
-          onclick: () => guarded(async () => { await link.setFrequency(hz); await link.setMode("USB");
-            syncPanelFromShadow(); toast("Channel " + CAT.formatMHz(hz)); }) }));
-      }
-      box.appendChild(row);
-    }
-
-    const feed = SolarFeed.stored();
-    if (feed && feed.bands && feed.bands[b.id]) {
-      box.appendChild(el("div", { class: "legend", style: "margin-top:14px", text: "Reported conditions" }));
-      const d = feed.bands[b.id].day, n = feed.bands[b.id].night;
-      box.appendChild(el("p", { class: "tiny", style: "margin:6px 0 0", text:
-        "By day " + (d || "not reported") + ", by night " + (n || "not reported") +
-        ". From the feed you configured, fetched " +
-        (feed.hours < 1 ? Math.round(feed.hours * 60) + " minutes ago" : Math.round(feed.hours) + " hours ago") +
-        ". HamQSL rates bands in pairs, so this covers a wider range than this one band." }));
-    }
-
-    const m = measured(b);
-    box.appendChild(el("div", { class: "legend", style: "margin-top:14px", text: "What you have measured here" }));
-    box.appendChild(el("p", { class: "tiny", style: "margin:6px 0 0", text: m
-      ? "Across " + m.sweeps + " of your own sweeps, the median reading was " + CAT.sMeterLabel(m.floor) +
-        " and the strongest was " + CAT.sMeterLabel(m.peak) + ". Last swept " + m.when.toISOString().slice(0, 16).replace("T", " ") + " UTC."
-      : "Nothing yet. Sweep this band on the Bandscope station and the noise floor will appear here and on the map." }));
-  }
-
-  function saveSolar() {
-    const sfi = Number($("solSfi").value), a = Number($("solA").value), k = Number($("solK").value);
-    if (!Number.isFinite(sfi) || !Number.isFinite(a) || !Number.isFinite(k) || !$("solSfi").value) {
-      toast("Enter all three numbers before recording them", true);
-      return;
-    }
-    Store.set("solar", { sfi: clamp(sfi, 0, 400), a: clamp(a, 0, 400), k: clamp(k, 0, 9),
-      when: new Date().toISOString() });
-    renderConditions();
-    toast("Solar numbers recorded, stamped with the time you entered them");
-  }
-
-  async function fetchFeed(force) {
-    const btn = $("btnSolFetch");
-    if (btn) { btn.disabled = true; btn.textContent = "Fetching"; }
-    try {
-      await SolarFeed.fetchNow(force);
-      render();
-      toast("Solar report fetched");
-    } catch (e) {
-      toast(e.message || String(e), true);
-    } finally {
-      if (btn) { btn.disabled = false; btn.textContent = "Fetch now"; }
-    }
-  }
-
-  /* only ever on a station the operator has opened, and only if they asked */
-  async function maybeAutoFetch() {
-    if (!SolarFeed.auto() || !SolarFeed.url()) return;
-    const have = SolarFeed.stored();
-    if (have && have.hours < 1) return;
-    if (Date.now() - SolarFeed.lastAttempt() < SolarFeed.MIN_GAP_MS) return;
-    try { await SolarFeed.fetchNow(false); render(); } catch (e) { /* stay quiet on a background try */ }
-  }
-
-  function render() { renderConditions(); renderMap(); renderDetail(); }
-
-  function start() {
-    if (ticker) clearInterval(ticker);
-    ticker = setInterval(() => { if (!$("st-chart").hidden) renderConditions(); }, 30000);
-  }
-
-  return { render, renderMap, renderDetail, renderConditions, saveSolar, start, measured, solar,
-    fetchFeed, maybeAutoFetch,
-    get selected() { return selected; }, set selected(v) { selected = v; },
-    usable, classLo };
-})();
-
-
-/* =====================================================================
-   v1.11  SOLAR FEED
-   The one part of Halyard that can touch the network, and it is off
-   until you give it an address. No address is compiled in, so a fresh
-   copy makes no requests at all, and everything else works whether this
-   ever succeeds or not.
-
-   HamQSL serves the usual report as XML but sends no CORS headers, so a
-   browser will refuse to read it directly, especially from a file:// page
-   whose origin is null. The worker in worker/solar-proxy.js re-serves it
-   with the right headers and caches it at the edge. Point this at that.
-   ===================================================================== */
-const SolarFeed = (() => {
-  const MIN_GAP_MS = 15 * 60 * 1000;    // be polite to whoever is serving this
-  let inFlight = false;
-
-  function url() { return String(Store.get("solarUrl", "") || "").trim(); }
-  function setUrl(u) { Store.set("solarUrl", String(u || "").trim().slice(0, 300)); }
-  function auto() { return !!Store.get("solarAuto", false); }
-  function setAuto(v) { Store.set("solarAuto", !!v); }
-
-  const num = (v, lo, hi) => {
-    const n = Number(String(v).replace(/[^0-9.\-]/g, ""));
-    return Number.isFinite(n) ? clamp(n, lo, hi) : null;
-  };
-  const text = (v, max) => String(v === null || v === undefined ? "" : v).trim().slice(0, max || 40);
-
-  /* HamQSL groups bands in pairs, so one rating covers more than one of ours */
-  const GROUPS = {
-    "80m-40m": ["80m", "60m", "40m"],
-    "40m-30m": ["40m", "30m"],
-    "30m-20m": ["30m", "20m"],
-    "20m-17m": ["20m", "17m"],
-    "17m-15m": ["17m", "15m"],
-    "15m-12m": ["15m", "12m"],
-    "12m-10m": ["12m", "10m"],
-    "10m-6m":  ["10m", "6m"]
-  };
-
-  /* Parsed as inert text. Nothing from the wire is ever put into the DOM
-     as markup, and every number is clamped into a sane range. */
-  function parse(xmlText) {
-    if (typeof DOMParser === "undefined") throw new Error("This browser cannot parse XML");
-    const doc = new DOMParser().parseFromString(String(xmlText), "application/xml");
-    if (doc.getElementsByTagName("parsererror").length) throw new Error("The feed did not return valid XML");
-    const pick = (tag) => {
-      const n = doc.getElementsByTagName(tag)[0];
-      return n ? n.textContent : null;
-    };
-    if (pick("solarflux") === null && pick("sunspots") === null) {
-      throw new Error("That address answered, but it is not a HamQSL solar report");
-    }
-    const bands = {};
-    for (const el2 of Array.from(doc.getElementsByTagName("band"))) {
-      const name = text(el2.getAttribute("name"), 20);
-      const when = text(el2.getAttribute("time"), 10).toLowerCase();
-      const rating = text(el2.textContent, 20);
-      const ours = GROUPS[name];
-      if (!ours || (when !== "day" && when !== "night")) continue;
-      for (const id of ours) {
-        bands[id] = bands[id] || {};
-        /* a band named by two groups keeps the worse of the two ratings */
-        const rank = { "Good": 3, "Fair": 2, "Poor": 1 };
-        const had = bands[id][when];
-        if (!had || (rank[rating] || 0) < (rank[had] || 0)) bands[id][when] = rating;
-      }
-    }
-    const vhf = {};
-    for (const el2 of Array.from(doc.getElementsByTagName("phenomenon"))) {
-      const name = text(el2.getAttribute("name"), 30);
-      const loc = text(el2.getAttribute("location"), 30);
-      if (!name) continue;
-      vhf[name + (loc ? " " + loc : "")] = text(el2.textContent, 30);
-    }
-    return {
-      sfi: num(pick("solarflux"), 0, 400),
-      a: num(pick("aindex"), 0, 400),
-      k: num(pick("kindex"), 0, 9),
-      sunspots: num(pick("sunspots"), 0, 999),
-      xray: text(pick("xray"), 12),
-      geomag: text(pick("geomagfield"), 24),
-      noise: text(pick("signalnoise"), 16),
-      aurora: num(pick("aurora"), 0, 12),
-      updated: text(pick("updated"), 40),
-      source: text(pick("source"), 40),
-      bands, vhf
-    };
-  }
-
-  function stored() {
-    const r = Store.get("solarFeed", null);
-    if (!r || typeof r !== "object") return null;
-    const at = Date.parse(r.at);
-    if (!Number.isFinite(at)) return null;
-    return Object.assign({}, r, { at: new Date(at), hours: (Date.now() - at) / 3600000 });
-  }
-
-  function lastAttempt() { return Number(Store.get("solarTriedAt", 0)) || 0; }
-
-  async function fetchNow(force) {
-    const u = url();
-    if (!u) throw new Error("Set a feed address first. There is a Cloudflare Worker for this in the repository.");
-    if (!/^https:\/\//i.test(u)) throw new Error("The feed address has to be https");
-    if (inFlight) throw new Error("A fetch is already running");
-    const since = Date.now() - lastAttempt();
-    if (!force && since < MIN_GAP_MS) {
-      throw new Error("Last fetched " + Math.round(since / 60000) + " minutes ago. Solar numbers move slowly, so Halyard waits 15 minutes between fetches.");
-    }
-    if (typeof fetch !== "function") throw new Error("This browser has no fetch");
-
-    inFlight = true;
-    try {
-      const res = await fetch(u, { cache: "no-store", redirect: "follow" });
-      if (!res.ok) throw new Error("The feed answered " + res.status + " " + (res.statusText || ""));
-      const body = await res.text();
-      const data = parse(body);
-      const rec = Object.assign({}, data, { at: new Date().toISOString(), from: u });
-      Store.set("solarFeed", rec);
-      Store.set("solarTriedAt", Date.now());
-      return stored();
-    } catch (e) {
-      /* the failure everyone hits first deserves to be named properly */
-      const msg = String(e && e.message ? e.message : e);
-      if (/failed to fetch|networkerror|load failed/i.test(msg)) {
-        throw new Error("The browser blocked or could not reach that address. HamQSL sends no CORS headers, so it cannot be read directly; put the worker from worker/solar-proxy.js in front of it.");
-      }
-      throw e;
-    } finally {
-      inFlight = false;
-    }
-  }
-
-  /* whichever of the two sources is fresher wins, and it says which it was */
-  function best() {
-    const f = stored();
-    const m = Chart.solar();
-    if (f && m) return (f.at.valueOf() >= m.when.valueOf()) ? { kind: "fetched", r: f } : { kind: "entered", r: m };
-    if (f) return { kind: "fetched", r: f };
-    if (m) return { kind: "entered", r: m };
-    return null;
-  }
-
-  function bandRating(bandId, phase) {
-    const f = stored();
-    if (!f || !f.bands || !f.bands[bandId]) return null;
-    return f.bands[bandId][phase] || null;
-  }
-
-  return { url, setUrl, auto, setAuto, parse, stored, fetchNow, best, bandRating,
-    GROUPS, MIN_GAP_MS, lastAttempt };
 })();
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);

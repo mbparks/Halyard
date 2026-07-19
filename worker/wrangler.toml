@@ -1,0 +1,6 @@
+name = "halyard-solar"
+main = "solar-proxy.js"
+compatibility_date = "2026-07-18"
+
+# No KV, no D1, no secrets. This worker does one thing: fetch a public XML
+# document and re-serve it with CORS headers and an edge cache.
