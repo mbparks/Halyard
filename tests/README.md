@@ -21,7 +21,7 @@ finds a planted signal and restores the original frequency, placing markers,
 harvesting peaks, running trials end to end and abandoning one partway,
 importing and re-importing ADIF, tuning individual digits by pointer, focus, and
 scroll wheel, turning and flicking the dial, choosing bands, and checking what
-the export actually contains. 234 checks.
+the export actually contains. 236 checks.
 
 ## Why the stubs
 

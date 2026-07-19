@@ -1,6 +1,11 @@
-name = "halyard-solar"
+name = "halyard"
 main = "solar-proxy.js"
 compatibility_date = "2026-07-18"
+
+# Publish on the workers.dev subdomain. Without this the deploy can succeed
+# while nothing answers at the hostname, which shows up as a 404 from
+# Cloudflare rather than any response from the worker itself.
+workers_dev = true
 
 # No KV, no D1, no secrets. This worker does one thing: fetch a public XML
 # document and re-serve it with CORS headers and an edge cache.

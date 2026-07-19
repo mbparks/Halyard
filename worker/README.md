@@ -15,8 +15,29 @@ cd worker
 npx wrangler deploy
 ```
 
-Wrangler prints a URL. Paste it into the **Solar feed address** box on Halyard's
-Chart station and press **Fetch now**.
+Wrangler prints a URL. Use the one it prints, not one you expect: the hostname
+comes from `name` in `wrangler.toml`, so renaming the worker renames the URL.
+Paste it into the **Solar feed address** box on Halyard's Chart station and
+press **Fetch now**.
+
+Check it from a terminal before pasting it in, which separates a deployment
+problem from a Halyard problem:
+
+```
+curl -i https://<your-worker>.workers.dev/
+```
+
+You want `200`, a `content-type` of `application/xml`, an
+`access-control-allow-origin: *` header, and a body starting with `<solar>`.
+
+**A 404 is not this worker.** There is no code path here that returns one. A 404
+at a `workers.dev` hostname means Cloudflare has nothing deployed at that name:
+usually the `name` in `wrangler.toml` does not match the hostname you are
+trying, or the deploy did not publish to the workers.dev subdomain. Check with:
+
+```
+npx wrangler deployments list
+```
 
 ## What it does
 

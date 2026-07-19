@@ -1,6 +1,6 @@
 {
   "name": "halyard-tests",
-  "version": "1.11.0",
+  "version": "1.11.1",
   "private": true,
   "type": "module",
   "description": "Headless harnesses for Halyard FI-119. Both must pass before a release.",

@@ -720,6 +720,7 @@ w.fetch = async (url) => {
   fetchCalls++;
   if (String(url).includes("broken")) throw new TypeError("Failed to fetch");
   if (String(url).includes("notxml")) return { ok: true, status: 200, text: async () => "<html>hi</html>" };
+  if (String(url).includes("missing")) return { ok: false, status: 404, statusText: "Not Found", text: async () => "" };
   return { ok: true, status: 200, statusText: "OK", text: async () => SAMPLE };
 };
 
@@ -783,6 +784,16 @@ $("btnSolFetch").click();
 await new Promise(r => setTimeout(r, 400));
 check("a page that is not a solar report is rejected",
   $("toast").textContent.includes("not a HamQSL solar report"), $("toast").textContent.slice(0, 120));
+
+// a 404 must point at the deployment, not at the proxy
+G.Store.set("solarTriedAt", 0);
+$("solUrl").value = "https://missing.example.workers.dev/";
+$("solUrl").dispatchEvent(new w.Event("change"));
+$("btnSolFetch").click();
+await new Promise(r => setTimeout(r, 400));
+check("a 404 says nothing is deployed there rather than echoing the status",
+  $("toast").textContent.includes("Nothing is deployed"), $("toast").textContent.slice(0, 130));
+check("and names where to look", $("toast").textContent.includes("wrangler.toml"));
 
 // clearing the address switches the whole thing off again
 $("solUrl").value = "";

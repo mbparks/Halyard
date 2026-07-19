@@ -2,6 +2,19 @@
 
 All notable changes to Halyard (FI-119).
 
+## 1.11.1
+
+- The worker now deploys as `halyard` rather than `halyard-solar`, and sets
+  `workers_dev = true` explicitly. A deploy can otherwise succeed while nothing
+  answers at the hostname.
+- A 404 from the solar feed now says that nothing is deployed at that address
+  and points at the `name` in `wrangler.toml`, instead of repeating the status
+  code. The proxy has no code path that returns a 404, so a 404 always comes
+  from the host and never from the proxy, and the message says which.
+- The worker README explains how to verify a deployment with `curl` before
+  pasting the address into Halyard, which separates a deployment problem from a
+  Halyard problem.
+
 ## 1.11.0
 
 The Chart station can now fetch a HamQSL solar report, on your terms.

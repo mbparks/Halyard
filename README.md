@@ -10,7 +10,7 @@ the radio's front panel in a browser window, builds a bandscope by sweeping the
 S-meter, keeps a channel locker and a contact log, and includes a virtual
 FT-897D so all of it can be exercised with no cable attached.
 
-Version 1.11.0. GPL-3.0.
+Version 1.11.1. GPL-3.0.
 
 ---
 
@@ -219,7 +219,7 @@ npm test
 ```
 
 `tests/selftest.mjs` runs the in-app suite under jsdom. `tests/integration.mjs`
-drives the real UI, 234 further checks covering connection, panel apply,
+drives the real UI, 236 further checks covering connection, panel apply,
 read-back, sweeps, markers, harvesting, trials, ADIF round trips, export
 contents, digit tuning by pointer and by keyboard, dial turns and flicks, band
 selection, and clean disconnect. Both must pass before a release.
